@@ -1,4 +1,4 @@
-# PySpike
+# Spikeball Matchmaking
 App to manage matchups, scores and leaderboard for Spikeball.
 
 ## Setup
