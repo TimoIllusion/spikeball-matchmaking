@@ -4,6 +4,9 @@ import numpy as np
 
 from matchmaking.data import Player, Matchup, Team 
 
+#TODO: implement metrics to evaluate generated matchups
+#TODO: implement brute force optimization
+#TODO: offline matchup generation
 
 def reset_matchups():
     # TODO: reset session
