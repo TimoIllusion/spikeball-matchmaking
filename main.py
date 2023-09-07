@@ -3,6 +3,7 @@ import numpy as np
 
 
 from matchmaking.data import Player, Matchup, Team 
+from matchmaking.metrics import get_avg_game_distance
 
 #TODO: implement metrics to evaluate generated matchups
 #TODO: implement brute force optimization
@@ -216,6 +217,28 @@ def gen_matchup_callback():
         # TODO: warning popup
         pass
 
+def gen_10_matchups_callback():
+    
+    matchups = []
+    for i in range(10):
+        
+        while True:
+            mtchp = generate_random_matchup()
+            #mtchp = generate_matchup_with_naive_heuristic()
+
+            if mtchp.get_unique_identifier() in [x.get_unique_identifier() for x in st.session_state.matchup_history]:
+                continue
+            else:
+                break
+        
+        matchups.append(mtchp)
+        
+    st.write("Planned matchups:")
+    st.write(matchups)
+    results = get_avg_game_distance(matchups)
+    st.write(results)
+        
+
 
 def gen_matchup_callback_heuristic():
     
@@ -326,6 +349,9 @@ def main():
     
     st.button('Get next matchup intelligently', key='button_gen_matchup_intelligently',
               on_click=gen_matchup_callback_heuristic)
+    
+    st.button('Get 10 matchups randomly', key='button_gen_10_matchup',
+              on_click=gen_10_matchups_callback)
     
     #st.button('Calc all matchups', key='all_matchups',
     #          on_click=generate_all_possible_matchups)
