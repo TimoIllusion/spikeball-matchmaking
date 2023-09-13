@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 class Player:
     unique_identifier: str
@@ -112,6 +112,26 @@ class Matchup:
     
     def get_teams(self) -> List[Team]:
         return [self.team_a, self.team_b]
+    
+    def get_teammate(self, player_uid: str) -> Optional[Player]:
+        if player_uid == self.team_a.player_1.get_unique_identifier():
+            return self.team_a.player_2
+        elif player_uid == self.team_a.player_2.get_unique_identifier():
+            return self.team_a.player_1
+        elif player_uid == self.team_b.player_1.get_unique_identifier():
+            return self.team_b.player_2
+        elif player_uid == self.team_b.player_2.get_unique_identifier():
+            return self.team_b.player_1
+        else:
+            return None
+        
+    def get_enemy_team(self, player_uid: str) -> Optional[Team]:
+        if player_uid in self.team_a.get_unique_identifier():
+            return self.team_b
+        elif player_uid in self.team_b.get_unique_identifier():
+            return self.team_a
+        else:
+            return None
     
     def __str__(self) -> str:
         return self.get_unique_identifier()
