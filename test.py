@@ -17,5 +17,6 @@ for i in range(NUM_GAMES):
 
     matchups.append(Matchup.from_names(*selected_players))
 
-results = get_avg_game_distance(matchups)
+results, value = get_avg_game_distance(matchups)
 pprint(results)
+print(value)
