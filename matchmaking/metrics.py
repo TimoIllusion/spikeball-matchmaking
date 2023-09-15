@@ -73,7 +73,7 @@ def get_avg_game_distance(matchups: List[Matchup]) -> int:
         players += matchup.get_all_player_uids()
         
     unique_players = list(set(players))
-    print(unique_players)
+    # print(unique_players)
     
     # search for distances between games for each player, basically calculating the average distance between games for each player
     
