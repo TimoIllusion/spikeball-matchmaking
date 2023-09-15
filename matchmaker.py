@@ -142,22 +142,6 @@ def main():
     column_names = ['Round', 'Field', 'Team 1', 'VS', 'Team 2', ''] + players
     df = pd.DataFrame(df_list, columns=column_names)
     df.to_excel(f'matchups_with_points_and_format_{NUM_PLAYERS}pl_{duration_str}.xlsx', index=False)
-    
-    
-    # # Create a DataFrame and write it to an Excel file
-    # df_list = []
-    # for i, rnd in enumerate(rounds):
-    #     for j, field in enumerate(rnd):
-    #         team_a = field[0][0] + " & " + field[0][1]
-    #         team_b = field[1][0] + " & " + field[1][1]
-            
-    #         row = [i+1, f"Field {j+1}", team_a, team_b]
-            
-    #         df_list.append(row)
-
-    # column_names = ['Round', 'Field', 'Team 1', 'Team 2', ''] + players
-    # df = pd.DataFrame(df_list, columns=column_names)
-    # df.to_excel('matchups_with_points.xlsx', index=False)
         
     
 if __name__ == '__main__':

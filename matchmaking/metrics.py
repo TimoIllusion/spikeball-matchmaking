@@ -111,7 +111,7 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup]) -> int:
     
     global_results["acc_teammate_hist_stdev"] = sum([statistics.stdev(list(results[x]["teammate_hist"].values())) for x in results.keys() if len(results[x]["teammate_hist"].values()) > 1])
     
-    global_results["acc_enemy_teams_hist_stdev"] = sum([statistics.stdev(list(results[x]["enemy_teams_hist"].values())) for x in results.keys()])
+    global_results["acc_enemy_teams_hist_stdev"] = sum([statistics.stdev(list(results[x]["enemy_teams_hist"].values())) for x in results.keys() if len(results[x]["enemy_teams_hist"].values()) > 1])
     
     global_results["acc_consecutive_teammates_amount"] = sum([sum(list(results[x]["consectuve_teammates_hist"].values())) for x in results.keys()])
     
@@ -125,8 +125,8 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup]) -> int:
         (0.0, "per_player_squared_break_lengths_avg"),
         (5.0, "acc_teammate_hist_stdev"),
         (5.0, "acc_enemy_teams_hist_stdev"),
-        (3.0, "acc_consecutive_teammates_amount"),
-        (3.0, "acc_consecutive_enemies_amount"),
+        (10.0, "acc_consecutive_teammates_amount"),
+        (10.0, "acc_consecutive_enemies_amount"),
         ]
 
     loss = 0.0

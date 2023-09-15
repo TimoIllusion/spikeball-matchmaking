@@ -155,10 +155,6 @@ def generate_matchup_with_naive_heuristic():
             if occurence:
                 played_matchups += 1
                 
-                
-                
-    
-        
         
         # amount of games played in last X games
         # matchups since last played

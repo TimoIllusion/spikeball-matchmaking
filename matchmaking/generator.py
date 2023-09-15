@@ -12,7 +12,7 @@ from matchmaking.metrics import get_avg_matchup_diversity_score
 def get_most_diverse_matchups(players: List[Player], num_rounds: int, num_fields: int, num_iterations: int) -> Tuple[List[Matchup], float, dict]:
 
     best_scores = []
-    best_score = 0
+    min_score = np.inf
     best_matchup_config = None
 
     for _ in tqdm(range(num_iterations)):
@@ -49,10 +49,10 @@ def get_most_diverse_matchups(players: List[Player], num_rounds: int, num_fields
         # pprint(results)
         # print(value)
         
-        if score > best_score:
+        if score < min_score:
             best_matchup_config = deepcopy(matchups)
-            best_score = score
-            best_scores.append(best_score)
+            min_score = score
+            best_scores.append(min_score)
 
     results, _ = get_avg_matchup_diversity_score(best_matchup_config)
 
@@ -61,6 +61,6 @@ def get_most_diverse_matchups(players: List[Player], num_rounds: int, num_fields
 
     print("=====================================")
     [print(f"{i} - {i%num_fields} - {x}") for i, x in enumerate(best_matchup_config)]
-    print("matchup_diversity_score:", best_score)
+    print("matchup_diversity_score:", min_score)
     
-    return best_matchup_config, best_score, results
+    return best_matchup_config, min_score, results

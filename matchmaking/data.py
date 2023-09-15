@@ -60,6 +60,9 @@ class Team:
     def get_unique_identifier(self):
         return str(self.unique_identifier)
     
+    def get_all_player_uids(self) -> List[str]:
+        return [self.player_1.get_unique_identifier(), self.player_2.get_unique_identifier()]
+    
     def __str__(self) -> str:
         return self.get_unique_identifier()
     
