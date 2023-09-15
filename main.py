@@ -3,7 +3,7 @@ import numpy as np
 
 
 from matchmaking.data import Player, Matchup, Team 
-from matchmaking.metrics import get_avg_game_distance
+from matchmaking.metrics import get_avg_matchup_diversity_score
 
 #TODO: implement metrics to evaluate generated matchups
 #TODO: implement brute force optimization
@@ -235,7 +235,7 @@ def gen_10_matchups_callback():
         
     st.write("Planned matchups:")
     st.write(matchups)
-    results = get_avg_game_distance(matchups)
+    results = get_avg_matchup_diversity_score(matchups)
     st.write(results)
         
 

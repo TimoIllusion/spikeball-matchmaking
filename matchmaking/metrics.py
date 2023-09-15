@@ -2,7 +2,6 @@ from typing import List
 import statistics
 from collections import Counter
 
-
 from matchmaking.data import Matchup, Team, Player
 
 def _find_consecutive_zeros(arr):
@@ -65,7 +64,7 @@ def _get_enemy_teams(matchups: List[Matchup], player_uid: str) -> List[str]:
     return enemy_team_uids
 
 
-def get_avg_game_distance(matchups: List[Matchup]) -> int:
+def get_avg_matchup_diversity_score(matchups: List[Matchup]) -> int:
     
     # get unique player identifiers
     players = []
@@ -101,19 +100,41 @@ def get_avg_game_distance(matchups: List[Matchup]) -> int:
             }
                
     # calculate std dev of results (shows how fair the playtime distribution is)
-    results["global"] = {
-        "num_played_matches_stdev": statistics.stdev([results[x]["num_played_matches"] for x in results.keys()]),
-        "acc_break_lengths_stdev": sum([results[x]["break_lengths_stdev"] for x in results.keys()]),
-        "per_player_squared_break_lengths_avg": sum([results[x]["break_lengths_avg"] ** 2 for x in results.keys()]),
-        }
     
+    global_results = {}
+    
+    global_results["num_played_matches_stdev"] = statistics.stdev([results[x]["num_played_matches"] for x in results.keys()])
+    
+    global_results["acc_break_lengths_stdev"] = sum([results[x]["break_lengths_stdev"] for x in results.keys()])
+    
+    global_results["per_player_squared_break_lengths_avg"] = sum([results[x]["break_lengths_avg"] ** 2 for x in results.keys()])
+    
+    global_results["acc_teammate_hist_stdev"] = sum([statistics.stdev(list(results[x]["teammate_hist"].values())) for x in results.keys() if len(results[x]["teammate_hist"].values()) > 1])
+    
+    global_results["acc_enemy_teams_hist_stdev"] = sum([statistics.stdev(list(results[x]["enemy_teams_hist"].values())) for x in results.keys()])
+    
+    global_results["acc_consecutive_teammates_amount"] = sum([sum(list(results[x]["consectuve_teammates_hist"].values())) for x in results.keys()])
+    
+    global_results["acc_consecutive_enemies_amount"] = sum([sum(list(results[x]["consecutive_enemies_hist"].values())) for x in results.keys()])
+        
     # TODO: calculate entropy, energy or something similar to quantify how good the variety of matchups played is
     
-    alpha = 10.0
-    beta = 1.0
+    weights_and_metrics = [
+        (10.0, "num_played_matches_stdev"),
+        (0.0, "acc_break_lengths_stdev"),
+        (0.0, "per_player_squared_break_lengths_avg"),
+        (5.0, "acc_teammate_hist_stdev"),
+        (5.0, "acc_enemy_teams_hist_stdev"),
+        (3.0, "acc_consecutive_teammates_amount"),
+        (3.0, "acc_consecutive_enemies_amount"),
+        ]
+
+    loss = 0.0
     
-    loss = alpha * results["global"]["num_played_matches_stdev"] + beta * results["global"]["acc_break_lengths_stdev"] 
+    for weight, attribute_key in weights_and_metrics:
+        loss += weight * global_results[attribute_key]
     
+    results["global"] = global_results
     
     return results, loss
         
