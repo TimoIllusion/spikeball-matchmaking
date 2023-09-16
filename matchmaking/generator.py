@@ -49,7 +49,7 @@ def get_most_diverse_matchups(players: List[Player], num_rounds: int, num_fields
 
         # print(matchups)
 
-        results, score = get_avg_matchup_diversity_score(matchups)
+        results, score = get_avg_matchup_diversity_score(matchups, len(players))
         # pprint(results)
         # print(value)
         
@@ -59,7 +59,7 @@ def get_most_diverse_matchups(players: List[Player], num_rounds: int, num_fields
             best_scores.append(min_score)
             print(min_score)
 
-    results, _ = get_avg_matchup_diversity_score(best_matchup_config)
+    results, _ = get_avg_matchup_diversity_score(best_matchup_config, len(players))
 
     pprint(results)
     print(best_scores)

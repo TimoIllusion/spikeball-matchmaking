@@ -64,7 +64,7 @@ def _get_enemy_teams(matchups: List[Matchup], player_uid: str) -> List[str]:
     return enemy_team_uids
 
 
-def get_avg_matchup_diversity_score(matchups: List[Matchup]) -> int:
+def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int) -> int:
     
     # get unique player identifiers
     players = []
@@ -115,7 +115,7 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup]) -> int:
                
     # calculate std dev of results (shows how fair the playtime distribution is)
     
-    
+    global_not_playing_players_index = num_players - len(unique_players)
     
     global_num_played_matches = [results[x]["num_played_matches"] for x in results.keys()]
     global_played_matches_index = statistics.stdev(global_num_played_matches)
@@ -142,6 +142,7 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup]) -> int:
     # TODO: calculate entropy, energy or something similar to quantify how good the variety of matchups played is
     
     global_results = {
+        "global_not_playing_players_index": global_not_playing_players_index,
         "global_played_matches_index": global_played_matches_index,
         "global_break_occurence_index": global_break_occurence_index,
         "global_break_shortness_index": global_break_shortness_index,
@@ -152,13 +153,14 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup]) -> int:
         }
 
     weights_and_metrics = [
-        (10.0, "global_played_matches_index"),
-        (0.0, "global_break_occurence_index"),
-        (0.0, "global_break_shortness_index"),
-        (5.0, "global_teammate_variety_index"),
-        (5.0, "global_enemy_team_variety_index"),
+        (100000.0, "global_not_playing_players_index"),
+        (10000.0, "global_played_matches_index"),
         (10.0, "global_teammate_succession_index"),
         (10.0, "global_enemy_team_succession_index"),
+        (5.0, "global_teammate_variety_index"),
+        (5.0, "global_enemy_team_variety_index"),
+        (5.0, "global_break_occurence_index"), # 0.0
+        (5.0, "global_break_shortness_index"), # 0.0
         ]
 
     loss = 0.0
