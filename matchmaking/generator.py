@@ -9,7 +9,7 @@ from matchmaking.data import Player, Matchup, Team
 from matchmaking.metrics import get_avg_matchup_diversity_score
 
 #TODO: split in subfunctions and clean up
-def get_most_diverse_matchups(players: List[Player], num_rounds: int, num_fields: int, num_iterations: int) -> Tuple[List[Matchup], float, dict]:
+def get_most_diverse_matchups(players: List[Player], num_rounds: int, num_fields: int, num_iterations: int, weights_and_metrics: List[Tuple[float, str]]) -> Tuple[List[Matchup], float, dict]:
 
     #TODO: make configurable from outside
     weights_and_metrics = [
