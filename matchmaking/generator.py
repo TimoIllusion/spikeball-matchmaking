@@ -20,12 +20,12 @@ def get_most_diverse_matchups(players: List[Player], num_rounds: int, num_fields
         matchup_history = []
         matchups: List[str] = []
         for r in range(num_rounds):
-            print("Round " + str(r + 1))
+            # print("Round " + str(r + 1))
             
             invalid = True
             while invalid:
                 
-                print("try")
+                # print("try")
             
                 #TODO: sample from all possible 4-player matchups and check if any player is already playing in the current round
                 selected_players = np.random.choice(players, replace=False, size=4*num_fields).tolist()

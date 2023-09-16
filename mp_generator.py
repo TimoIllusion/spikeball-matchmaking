@@ -1,5 +1,5 @@
 from multiprocessing import Process
-from single_generator import main
+from sp_generator import main
 
 if __name__ == "__main__":
 
