@@ -11,18 +11,6 @@ from matchmaking.metrics import get_avg_matchup_diversity_score
 #TODO: split in subfunctions and clean up
 def get_most_diverse_matchups(players: List[Player], num_rounds: int, num_fields: int, num_iterations: int, weights_and_metrics: List[Tuple[float, str]]) -> Tuple[List[Matchup], float, dict]:
 
-    #TODO: make configurable from outside
-    weights_and_metrics = [
-        (100000.0, "global_not_playing_players_index"),
-        (10000.0, "global_played_matches_index"),
-        (10.0, "global_teammate_succession_index"),
-        (10.0, "global_enemy_team_succession_index"),
-        (5.0, "global_teammate_variety_index"),
-        (5.0, "global_enemy_team_variety_index"),
-        (0.0, "global_break_occurence_index"), # 0.0-5.0
-        (0.0, "global_break_shortness_index"), # 0.0-5.0
-        ]
-
     best_scores = []
     min_score = np.inf
     best_matchup_config = None
