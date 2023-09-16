@@ -63,7 +63,7 @@ def _get_enemy_teams(matchups: List[Matchup], player_uid: str) -> List[str]:
 
     return enemy_team_uids
 
-
+#TODO: fix break calculation for multiple fields
 def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int) -> int:
     
     # get unique player identifiers
@@ -159,8 +159,8 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int) -
         (10.0, "global_enemy_team_succession_index"),
         (5.0, "global_teammate_variety_index"),
         (5.0, "global_enemy_team_variety_index"),
-        (5.0, "global_break_occurence_index"), # 0.0
-        (5.0, "global_break_shortness_index"), # 0.0
+        (0.0, "global_break_occurence_index"), # 0.0-5.0
+        (0.0, "global_break_shortness_index"), # 0.0-5.0
         ]
 
     loss = 0.0

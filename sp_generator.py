@@ -5,8 +5,8 @@ from matchmaking.utils import export_to_excel
 def main():
     NUM_ITERATIONS = 10000
 
-    NUM_ROUNDS = 6
-    NUM_FIELDS = 2
+    NUM_ROUNDS = 5
+    NUM_FIELDS = 3
 
     players = [
         Player("Diana"), 
@@ -14,7 +14,7 @@ def main():
         Player("Peggy"), 
         Player("Freddy"), 
         Player("Frederik"), 
-        # Player("Manuel"), 
+        Player("Manuel"), 
         Player("Melike"), 
         Player("Dascha"),
         Player("Corasti"),

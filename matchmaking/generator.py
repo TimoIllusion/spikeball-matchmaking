@@ -57,7 +57,7 @@ def get_most_diverse_matchups(players: List[Player], num_rounds: int, num_fields
             best_matchup_config = deepcopy(matchups)
             min_score = score
             best_scores.append(min_score)
-            print(min_score)
+            print("Got new minimal index: ", min_score)
 
     results, _ = get_avg_matchup_diversity_score(best_matchup_config, len(players))
 
