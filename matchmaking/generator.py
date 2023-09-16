@@ -4,11 +4,11 @@ from typing import List, Tuple
 
 from tqdm import tqdm
 import numpy as np
-from itertools import combinations, permutations, product
 
 from matchmaking.data import Player, Matchup, Team
 from matchmaking.metrics import get_avg_matchup_diversity_score
 
+#TODO: split in subfunctions and clean up
 def get_most_diverse_matchups(players: List[Player], num_rounds: int, num_fields: int, num_iterations: int) -> Tuple[List[Matchup], float, dict]:
 
     best_scores = []
@@ -19,24 +19,28 @@ def get_most_diverse_matchups(players: List[Player], num_rounds: int, num_fields
 
         matchup_history = []
         matchups: List[str] = []
-        for _ in range(num_rounds):
+        for r in range(num_rounds):
+            print("Round " + str(r + 1))
             
-            #TODO: sample from all possible 4-player matchups and check if any player is already playing in the current round
-            selected_players = np.random.choice(players, replace=False, size=4*num_fields).tolist()
-            # print(selected_players)
-            
-            temp_matchups = []
-            for j in range(num_fields):
-                four_players = selected_players[ j*4 : j*4 + 4 ]
-                temp_matchups.append(Matchup.from_names(*four_players))
+            invalid = True
+            while invalid:
                 
-            valid = True
-            for matchup in temp_matchups:
-                if matchup.get_unique_identifier() in matchup_history:
-                    valid = False
+                print("try")
+            
+                #TODO: sample from all possible 4-player matchups and check if any player is already playing in the current round
+                selected_players = np.random.choice(players, replace=False, size=4*num_fields).tolist()
+                # print(selected_players)
+                
+                temp_matchups = []
+                for j in range(num_fields):
+                    four_players = selected_players[ j*4 : j*4 + 4 ]
+                    temp_matchups.append(Matchup.from_names(*four_players))
                     
-            if valid == False:
-                continue
+                invalid = False
+                for matchup in temp_matchups:
+                    if matchup.get_unique_identifier() in matchup_history:
+                        invalid = True
+        
                 
             matchup_history += [x.get_unique_identifier() for x in temp_matchups]
             matchup_history = list(set(matchup_history))
@@ -62,6 +66,6 @@ def get_most_diverse_matchups(players: List[Player], num_rounds: int, num_fields
 
     print("=====================================")
     [print(f"{i} - {i%num_fields} - {x}") for i, x in enumerate(best_matchup_config)]
-    print("matchup_diversity_score:", min_score)
+    print("matchup_diversity_index (lower is better):", min_score)
     
     return best_matchup_config, min_score, results

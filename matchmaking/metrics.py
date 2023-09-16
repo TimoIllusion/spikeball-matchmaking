@@ -82,51 +82,83 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup]) -> int:
         break_lengths = _find_consecutive_zeros(played_matches)
         
         teammates = _get_teammates(matchups, player_uid)
-        consecutive_teammates = _count_consecutive_occurences(teammates)
+        consecutive_teammates_hist = _count_consecutive_occurences(teammates)
         
         enemies = _get_enemy_teams(matchups, player_uid)
-        consecutive_enemies = _count_consecutive_occurences(enemies)
+        consecutive_enemies_hist = _count_consecutive_occurences(enemies)
         # print(break_lengths)
+        
+        break_lengths_stdev = statistics.stdev(break_lengths) if len(break_lengths) > 1 else 0.0
+        
+        teammate_hist = Counter(teammates)
+        
+        teammate_hist_stdev = statistics.stdev(list(teammate_hist.values())) if len(teammate_hist) > 1 else 0.0
+        
+        enemy_teams_hist = Counter(enemies)
+        
+        enemy_teams_hist_stdev = statistics.stdev(list(enemy_teams_hist.values())) if len(enemy_teams_hist) > 1 else 0.0
         
         results[player_uid] = {
             "num_played_matches": sum(played_matches),
             "break_lengths_avg": statistics.mean(break_lengths), 
-            "break_lengths_stdev": statistics.stdev(break_lengths), 
+            "break_lengths_stdev": break_lengths_stdev, 
             "break_lengths_hist": Counter(break_lengths),
-            "teammate_hist": Counter(teammates),
-            "enemy_teams_hist": Counter(enemies),
-            "consectuve_teammates_hist": consecutive_teammates,
-            "consecutive_enemies_hist": consecutive_enemies,
+            "teammate_hist": teammate_hist,
+            "teammate_hist_stdev": teammate_hist_stdev,
+            "enemy_teams_hist": enemy_teams_hist,
+            "enemy_teams_hist_stdev": enemy_teams_hist_stdev,
+            "consectuve_teammates_hist": consecutive_teammates_hist,
+            "consecutive_enemies_hist": consecutive_enemies_hist,
+            "consecutive_teammates_total": sum(list(consecutive_teammates_hist.values())),
+            "consecutive_enemies_total": sum(list(consecutive_enemies_hist.values())),
             }
                
     # calculate std dev of results (shows how fair the playtime distribution is)
     
-    global_results = {}
     
-    global_results["num_played_matches_stdev"] = statistics.stdev([results[x]["num_played_matches"] for x in results.keys()])
     
-    global_results["acc_break_lengths_stdev"] = sum([results[x]["break_lengths_stdev"] for x in results.keys()])
+    global_num_played_matches = [results[x]["num_played_matches"] for x in results.keys()]
+    global_played_matches_index = statistics.stdev(global_num_played_matches)
     
-    global_results["per_player_squared_break_lengths_avg"] = sum([results[x]["break_lengths_avg"] ** 2 for x in results.keys()])
+    global_break_lengths_stdev = [results[x]["break_lengths_stdev"] for x in results.keys()]
+    global_break_occurence_index = sum(global_break_lengths_stdev)
     
-    global_results["acc_teammate_hist_stdev"] = sum([statistics.stdev(list(results[x]["teammate_hist"].values())) for x in results.keys() if len(results[x]["teammate_hist"].values()) > 1])
+    global_per_player_break_lengths_avg = [results[x]["break_lengths_avg"] for x in results.keys()]
+    global_per_player_break_lengths_avg_squared = [x**2 for x in global_per_player_break_lengths_avg]
+    global_break_shortness_index = sum(global_per_player_break_lengths_avg_squared)
     
-    global_results["acc_enemy_teams_hist_stdev"] = sum([statistics.stdev(list(results[x]["enemy_teams_hist"].values())) for x in results.keys() if len(results[x]["enemy_teams_hist"].values()) > 1])
+    per_player_teammate_hist_stdev = [results[x]["teammate_hist_stdev"] for x in results.keys()]
+    global_teammate_variety_index = sum(per_player_teammate_hist_stdev)
     
-    global_results["acc_consecutive_teammates_amount"] = sum([sum(list(results[x]["consectuve_teammates_hist"].values())) for x in results.keys()])
+    per_player_enemy_teams_hist_stdev = [results[x]["enemy_teams_hist_stdev"] for x in results.keys()]
+    global_enemy_team_variety_index = sum(per_player_enemy_teams_hist_stdev)
     
-    global_results["acc_consecutive_enemies_amount"] = sum([sum(list(results[x]["consecutive_enemies_hist"].values())) for x in results.keys()])
+    per_player_consecutive_teammates_amount = [results[x]["consecutive_teammates_total"] for x in results.keys()]
+    global_teammate_succession_index = sum(per_player_consecutive_teammates_amount)
+    
+    per_player_consecutive_enemies_amount = [results[x]["consecutive_enemies_total"] for x in results.keys()]
+    global_enemy_team_succession_index = sum(per_player_consecutive_enemies_amount)
         
     # TODO: calculate entropy, energy or something similar to quantify how good the variety of matchups played is
     
+    global_results = {
+        "global_played_matches_index": global_played_matches_index,
+        "global_break_occurence_index": global_break_occurence_index,
+        "global_break_shortness_index": global_break_shortness_index,
+        "global_teammate_variety_index": global_teammate_variety_index,
+        "global_enemy_team_variety_index": global_enemy_team_variety_index,
+        "global_teammate_succession_index": global_teammate_succession_index,
+        "global_enemy_team_succession_index": global_enemy_team_succession_index,
+        }
+
     weights_and_metrics = [
-        (10.0, "num_played_matches_stdev"),
-        (0.0, "acc_break_lengths_stdev"),
-        (0.0, "per_player_squared_break_lengths_avg"),
-        (5.0, "acc_teammate_hist_stdev"),
-        (5.0, "acc_enemy_teams_hist_stdev"),
-        (10.0, "acc_consecutive_teammates_amount"),
-        (10.0, "acc_consecutive_enemies_amount"),
+        (10.0, "global_played_matches_index"),
+        (0.0, "global_break_occurence_index"),
+        (0.0, "global_break_shortness_index"),
+        (5.0, "global_teammate_variety_index"),
+        (5.0, "global_enemy_team_variety_index"),
+        (10.0, "global_teammate_succession_index"),
+        (10.0, "global_enemy_team_succession_index"),
         ]
 
     loss = 0.0
