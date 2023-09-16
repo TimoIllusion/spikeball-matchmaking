@@ -5,9 +5,7 @@ import numpy as np
 from matchmaking.data import Player, Matchup, Team 
 from matchmaking.metrics import get_avg_matchup_diversity_score
 
-#TODO: implement metrics to evaluate generated matchups
-#TODO: implement brute force optimization
-#TODO: offline matchup generation
+#TODO: use simpler metric based approach and offline matchup generation
 
 def reset_matchups():
     # TODO: reset session

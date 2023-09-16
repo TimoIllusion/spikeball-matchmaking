@@ -3,7 +3,7 @@ from matchmaking.generator import get_most_diverse_matchups
 from matchmaking.utils import export_to_excel
 
 def main():
-    NUM_ITERATIONS = 20000
+    NUM_ITERATIONS = 10000
 
     NUM_ROUNDS = 6
     NUM_FIELDS = 2
@@ -20,7 +20,7 @@ def main():
         Player("Corasti"),
         Player("Ben"),
         Player("Julius"),
-        # Player("Timo"),
+        Player("Timo"),
         ]
     
     best_matchup_config, best_score, results = get_most_diverse_matchups(players, NUM_ROUNDS, NUM_FIELDS, NUM_ITERATIONS)
