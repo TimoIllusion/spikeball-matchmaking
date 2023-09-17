@@ -54,14 +54,16 @@ def _count_consecutive_occurences(list_of_symbols: List[str]) -> Counter:
 def _get_enemy_teams(matchups: List[Matchup], player_uid: str) -> List[str]:
     
     enemy_team_uids = []
+    enemy_player_uids = []
     for matchup in matchups:
         enemy_team = matchup.get_enemy_team(player_uid)
         
         if enemy_team is not None:
             enemy_team_uid = enemy_team.get_unique_identifier()
             enemy_team_uids.append(enemy_team_uid)
+            enemy_player_uids.extend(enemy_team.get_all_player_uids())
 
-    return enemy_team_uids
+    return enemy_team_uids, enemy_player_uids
 
 #TODO: fix break calculation for multiple fields
 def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, weights_and_metrics: List[Tuple[float, str]]) -> int:
@@ -84,9 +86,11 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, w
         teammates = _get_teammates(matchups, player_uid)
         consecutive_teammates_hist = _count_consecutive_occurences(teammates)
         
-        enemies = _get_enemy_teams(matchups, player_uid)
+        enemies, enemy_players = _get_enemy_teams(matchups, player_uid)
         consecutive_enemies_hist = _count_consecutive_occurences(enemies)
         # print(break_lengths)
+        
+        unique_people_played_with_or_against = list(set(enemy_players))
         
         break_lengths_stdev = statistics.stdev(break_lengths) if len(break_lengths) > 1 else 0.0
         
@@ -111,6 +115,8 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, w
             "consecutive_enemies_hist": consecutive_enemies_hist,
             "consecutive_teammates_total": sum(list(consecutive_teammates_hist.values())),
             "consecutive_enemies_total": sum(list(consecutive_enemies_hist.values())),
+            "unique_people_played_with_or_against": len(unique_people_played_with_or_against),
+            "unique_people_not_played_with_or_against": num_players - len(unique_people_played_with_or_against),
             }
                
     # calculate std dev of results (shows how fair the playtime distribution is)
@@ -138,6 +144,9 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, w
     
     per_player_consecutive_enemies_amount = [results[x]["consecutive_enemies_total"] for x in results.keys()]
     global_enemy_team_succession_index = sum(per_player_consecutive_enemies_amount)
+    
+    per_player_unique_people_not_played_with_or_against = [results[x]["unique_people_not_played_with_or_against"] for x in results.keys()]
+    global_player_engagement_index = sum(per_player_unique_people_not_played_with_or_against)
         
     # TODO: calculate entropy, energy or something similar to quantify how good the variety of matchups played is
     
@@ -150,6 +159,7 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, w
         "global_enemy_team_variety_index": global_enemy_team_variety_index,
         "global_teammate_succession_index": global_teammate_succession_index,
         "global_enemy_team_succession_index": global_enemy_team_succession_index,
+        "global_player_engagement_index": global_player_engagement_index,
         }
 
     loss = 0.0

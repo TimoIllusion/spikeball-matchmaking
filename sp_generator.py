@@ -3,7 +3,7 @@ from matchmaking.generator import get_most_diverse_matchups
 from matchmaking.utils import export_to_excel
 
 def main():
-    NUM_ITERATIONS = 10000
+    NUM_ITERATIONS = 100000
 
     NUM_ROUNDS = 5
     NUM_FIELDS = 3
@@ -26,6 +26,7 @@ def main():
     WEIGHT_METRIC_CONFIG = [
         (100000.0, "global_not_playing_players_index"),
         (10000.0, "global_played_matches_index"),
+        (10.0, "global_player_engagement_index"),
         (10.0, "global_teammate_succession_index"),
         (10.0, "global_enemy_team_succession_index"),
         (5.0, "global_teammate_variety_index"),
