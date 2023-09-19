@@ -116,7 +116,7 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, w
             "consecutive_teammates_total": sum(list(consecutive_teammates_hist.values())),
             "consecutive_enemies_total": sum(list(consecutive_enemies_hist.values())),
             "unique_people_played_with_or_against": len(unique_people_played_with_or_against),
-            "unique_people_not_played_with_or_against": num_players - len(unique_people_played_with_or_against),
+            "unique_people_not_played_with_or_against": (num_players - 1) - len(unique_people_played_with_or_against),
             }
                
     # calculate std dev of results (shows how fair the playtime distribution is)
