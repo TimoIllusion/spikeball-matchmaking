@@ -2,6 +2,8 @@ from typing import List, Tuple
 import statistics
 from collections import Counter
 
+import numpy as np
+
 from matchmaking.data import Matchup, Team, Player
 
 def _find_consecutive_zeros(arr):
@@ -104,7 +106,7 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, w
         
         results[player_uid] = {
             "num_played_matches": sum(played_matches),
-            "break_lengths_avg": statistics.mean(break_lengths), 
+            "break_lengths_avg": np.mean(break_lengths), 
             "break_lengths_stdev": break_lengths_stdev, 
             "break_lengths_hist": Counter(break_lengths),
             "teammate_hist": teammate_hist,

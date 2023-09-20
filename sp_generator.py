@@ -3,24 +3,25 @@ from matchmaking.generator import get_most_diverse_matchups
 from matchmaking.utils import export_to_excel
 
 def main():
-    NUM_ITERATIONS = 200000
+    NUM_ITERATIONS = 100000
 
-    NUM_ROUNDS = 5
-    NUM_FIELDS = 3
+    NUM_ROUNDS = 10
+    NUM_FIELDS = 1
 
     players = [
-        Player("Diana"), 
-        Player("Marco"), 
-        Player("Peggy"), 
+        # Player("Diana"), 
+        # Player("Marco"), 
+        # Player("Peggy"), 
         Player("Freddy"), 
         Player("Frederik"), 
-        Player("Manuel"), 
-        Player("Melike"), 
+        # Player("Manuel"), 
+        # Player("Melike"), 
         Player("Dascha"),
-        Player("Corasti"),
-        Player("Ben"),
-        Player("Julius"),
+        # Player("Corasti"),
+        # Player("Ben"),
+        # Player("Julius"),
         Player("Timo"),
+        Player("Christian")
         ]
     
     WEIGHT_METRIC_CONFIG = [
@@ -32,8 +33,8 @@ def main():
         (5.0, "global_player_engagement_index"),
         (5.0, "global_teammate_variety_index"),
         (5.0, "global_enemy_team_variety_index"),
-        (0.0, "global_break_occurence_index"), # 0.0-5.0
-        (0.0, "global_break_shortness_index"), # 0.0-5.0
+        (5.0, "global_break_occurence_index"), # 0.0-5.0
+        (5.0, "global_break_shortness_index"), # 0.0-5.0
         ]
     
     best_matchup_config, best_score, results = get_most_diverse_matchups(players, NUM_ROUNDS, NUM_FIELDS, NUM_ITERATIONS, WEIGHT_METRIC_CONFIG)
