@@ -129,7 +129,7 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, w
     global_played_matches_index = statistics.stdev(global_num_played_matches)
     
     global_break_lengths_stdev = [results[x]["break_lengths_stdev"] for x in results.keys()]
-    global_break_occurence_index = sum(global_break_lengths_stdev)
+    global_break_occurrence_index = sum(global_break_lengths_stdev)
     
     global_per_player_break_lengths_avg = [results[x]["break_lengths_avg"] for x in results.keys()]
     global_per_player_break_lengths_avg_squared = [x**2 for x in global_per_player_break_lengths_avg]
@@ -156,7 +156,7 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, w
     global_results = {
         "global_not_playing_players_index": global_not_playing_players_index,
         "global_played_matches_index": global_played_matches_index,
-        "global_break_occurence_index": global_break_occurence_index,
+        "global_break_occurrence_index": global_break_occurrence_index,
         "global_break_shortness_index": global_break_shortness_index,
         "global_teammate_variety_index": global_teammate_variety_index,
         "global_enemy_team_variety_index": global_enemy_team_variety_index,
