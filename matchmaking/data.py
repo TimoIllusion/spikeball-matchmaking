@@ -1,3 +1,5 @@
+from typing import List, Optional
+
 class Player:
     unique_identifier: str
     name: str
@@ -24,8 +26,11 @@ class Player:
     def add_to_draft_probability_score(self, value: float):
         self.draft_probability_score += value
         
-    def __str__(self):
+    def __str__(self) -> str:
         return self.get_unique_identifier()
+    
+    def __repr__(self) -> str:
+        return self.__str__()
 
 class Team:
     unique_identifier: str
@@ -55,8 +60,14 @@ class Team:
     def get_unique_identifier(self):
         return str(self.unique_identifier)
     
-    def __str__(self):
+    def get_all_player_uids(self) -> List[str]:
+        return [self.player_1.get_unique_identifier(), self.player_2.get_unique_identifier()]
+    
+    def __str__(self) -> str:
         return self.get_unique_identifier()
+    
+    def __repr__(self) -> str:
+        return self.__str__()
 
 
 class Matchup:
@@ -91,8 +102,42 @@ class Matchup:
     def get_unique_identifier(self):
         return str(self.unique_identifier)
     
-    def get_teams(self):
+    def get_all_player_uids(self) -> List[str]:
+        
+        players = []
+        
+        players.append(self.team_a.player_1.get_unique_identifier())
+        players.append(self.team_a.player_2.get_unique_identifier())
+        players.append(self.team_b.player_1.get_unique_identifier())
+        players.append(self.team_b.player_2.get_unique_identifier())
+        
+        return players
+    
+    def get_teams(self) -> List[Team]:
         return [self.team_a, self.team_b]
     
-    def __str__(self):
-        return self.get_unique_identifier()    
+    def get_teammate(self, player_uid: str) -> Optional[Player]:
+        if player_uid == self.team_a.player_1.get_unique_identifier():
+            return self.team_a.player_2
+        elif player_uid == self.team_a.player_2.get_unique_identifier():
+            return self.team_a.player_1
+        elif player_uid == self.team_b.player_1.get_unique_identifier():
+            return self.team_b.player_2
+        elif player_uid == self.team_b.player_2.get_unique_identifier():
+            return self.team_b.player_1
+        else:
+            return None
+        
+    def get_enemy_team(self, player_uid: str) -> Optional[Team]:
+        if player_uid in self.team_a.get_unique_identifier():
+            return self.team_b
+        elif player_uid in self.team_b.get_unique_identifier():
+            return self.team_a
+        else:
+            return None
+    
+    def __str__(self) -> str:
+        return self.get_unique_identifier()
+    
+    def __repr__(self) -> str:
+        return self.__str__()
