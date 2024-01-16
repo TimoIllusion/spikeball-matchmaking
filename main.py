@@ -3,8 +3,7 @@ import streamlit as st
 from matchmaking.data import Player
 from matchmaking.generator import get_most_diverse_matchups
 
-
-def init_state():
+def init_state() -> None:
 
     if "players" not in st.session_state:
         st.session_state.players = []
@@ -29,52 +28,64 @@ def init_state():
 
     if 'WEIGHT_METRIC_CONFIG' not in st.session_state:
         st.session_state.WEIGHT_METRIC_CONFIG = {}
-        
-
-
-def input_new_players():
-    st.write("#### Player selection")
-    new_player = st.text_input('New player name (or list of players seperated by comma):', key='input_new_player_name', placeholder="Name OR Name1,Name2,Name3,Name4,...")
-
-    st.button('Add player', key='button_add_player',
-              on_click=_submit_add_player, args=(new_player, ))
-
-    st.write("Current players:")
-    st.write([str(x) for x in st.session_state.players])
     
-def _submit_add_player(player_phrase: str):
+def _get_default_num_rounds() -> int:
     
-    if player_phrase == "":
-        st.warning(f"Please insert a player name or a comma separated list of names.")
-        return
-    
-    if "," in player_phrase:
-        players = player_phrase.split(",")
+    if st.session_state.max_matchups > 0:
+        return st.session_state.max_matchups
     else:
-        players = [player_phrase]
+        return 10
+
+def matchup_generation() -> None:
     
-    for player_name in players:
-        player = Player(player_name)
-        if player.get_unique_identifier() in [x.get_unique_identifier() for x in st.session_state.players]:
-            st.warning(f'The name "{player}" already exists.')
-        else:
-            st.session_state.players.append(player)
+    st.write("## Matchup generation")
     
-def show_max_matchups():
+    _show_max_matchups()
+
+    st.button('Generate matchups [may take a while...]', key='button_gen_10_matchup',
+              on_click=_gen_matchup_batch)
+    
+    st.write(st.session_state.matchups)
+    
+    st.write("Score (lower is better):", st.session_state.matchup_gen_score)
+    
+def _show_max_matchups() -> None:
+    
     st.session_state.max_matchups = _calculate_max_matchups(len(st.session_state.players))
     st.write("Max possible amount of unique matchups:", st.session_state.max_matchups)
-
+    
 def _calculate_max_matchups(num_players) -> int:
 
     n = num_players
 
     return int(((n * n - n) / 8) * (n * n - 5 * n + 6))
-
+    
+def _gen_matchup_batch() -> None:
+    
+    if len(st.session_state.players) < 4:
+        st.warning(f"Not enough players to generate matchups: {len(st.session_state.players)}. Four players are needed at least.")
+        return
+    
+    weight_metric_config = [ (value, key) for key, value in st.session_state.WEIGHT_METRIC_CONFIG.items()]
+    
+    print(weight_metric_config)
+    
+    best_matchup_config, best_score, results = get_most_diverse_matchups(
+        st.session_state.players, 
+        st.session_state.NUM_ROUNDS, 
+        st.session_state.NUM_FIELDS, 
+        st.session_state.NUM_ITERATIONS, 
+        weight_metric_config
+    )
+    
+    st.session_state.matchups = best_matchup_config
+    st.session_state.matchup_gen_score = best_score
+    st.session_state.results = results
 
 def configure():
     st.write("## Configuration")
     
-    input_new_players()
+    _input_new_players()
     
     st.write("#### Game Params")
     st.session_state.NUM_ROUNDS = st.slider('Number of Rounds:', min_value=1, max_value=100, value=_get_default_num_rounds())
@@ -97,51 +108,42 @@ def configure():
     st.write(f"Weight for Global Not Playing Players Index [CONSTANT]:", st.session_state.WEIGHT_METRIC_CONFIG["global_not_playing_players_index"])
     st.write(f"Weight for Global Played Matches Index [CONSTANT]:", st.session_state.WEIGHT_METRIC_CONFIG["global_played_matches_index"])
 
-def _get_default_num_rounds() -> int:
-    if st.session_state.max_matchups > 0:
-        return st.session_state.max_matchups
-    else:
-        return 10
+def _input_new_players() -> None:
+    
+    st.write("#### Player selection")
+    new_player = st.text_input('New player name (or list of players seperated by comma):', key='input_new_player_name', placeholder="Name OR Name1,Name2,Name3,Name4,...")
 
-def matchup_generation():
-    st.write("## Matchup generation")
-    
-    show_max_matchups()
+    st.button('Add player', key='button_add_player',
+              on_click=_submit_add_player, args=(new_player, ))
 
-    st.button('Generate matchups [may take a while...]', key='button_gen_10_matchup',
-              on_click=_gen_matchup_batch)
+    st.write("Current players:")
+    st.write([str(x) for x in st.session_state.players])
+
+def _submit_add_player(player_phrase: str) -> None:
     
-    st.write(st.session_state.matchups)
-    
-    st.write("Score (lower is better):", st.session_state.matchup_gen_score)
-    
-def _gen_matchup_batch():
-    
-    if len(st.session_state.players) < 4:
-        st.warning(f"Not enough players to generate matchups: {len(st.session_state.players)}. Four players are needed at least.")
+    if player_phrase == "":
+        st.warning(f"Please insert a player name or a comma separated list of names.")
         return
     
-    weight_metric_config = [ (value, key) for key, value in st.session_state.WEIGHT_METRIC_CONFIG.items()]
+    if "," in player_phrase:
+        players = player_phrase.split(",")
+    else:
+        players = [player_phrase]
     
-    print(weight_metric_config)
-    
-    best_matchup_config, best_score, results = get_most_diverse_matchups(
-        st.session_state.players, 
-        st.session_state.NUM_ROUNDS, 
-        st.session_state.NUM_FIELDS, 
-        st.session_state.NUM_ITERATIONS, 
-        weight_metric_config
-    )
-    
-    st.session_state.matchups = best_matchup_config
-    st.session_state.matchup_gen_score = best_score
-    st.session_state.results = results
+    for player_name in players:
+        player = Player(player_name)
+        if player.get_unique_identifier() in [x.get_unique_identifier() for x in st.session_state.players]:
+            st.warning(f'The name "{player}" already exists.')
+        else:
+            st.session_state.players.append(player)
 
-def additional_info():
+def additional_info() -> None:
     st.write("#### Additional Result Info")
     st.write("Matchup Statistics:", st.session_state.results)
 
-def main():
+
+
+def main() -> None:
 
     init_state()
 
@@ -156,5 +158,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()

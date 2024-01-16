@@ -1,10 +1,15 @@
 # Spikeball Matchmaking
-App to manage matchups, scores and leaderboard for Spikeball.
 
-## Setup
+Streamlit app automatically generates optimal matchups depending on several conditions like amount of breaks, variety of opponents and team compositions etc. for Spikeball or 2v2 games in general.
 
-Install packages in your virtual python environment using pip with `pip install -r requirements.txt`.
+This app is hosted on [Steamlit.io](https://spikeball.streamlit.app/).
 
-## Usage
+## Local Setup
 
-Run `streamlit run main.py` from the root of this repository.
+1. ```git clone https://github.com/TimoIllusion/spikeball-matchmaking.git```
+2. `cd spikeball-matchmaking`
+3. `conda create -n spikeballmm python=3.10`
+4. `conda activate spikeballmm`
+5. `pip install -r requirements.txt`
+6. `streamlit run main.py`
+7. Open http://localhost:8501/ (if it does not open automatically).
