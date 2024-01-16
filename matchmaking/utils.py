@@ -1,6 +1,7 @@
 from typing import List
 
 import pandas as pd
+
 from matchmaking.data import Matchup, Team, Player  
 
 def export_to_excel(matchups: List[Matchup], players: List[Player], num_fields: int, out_path: str):
