@@ -1,8 +1,7 @@
 from multiprocessing import Process
-from sp_generator import main
+from generate_matchups_excel_sp import main
 
 if __name__ == "__main__":
-
 
     worker = 16
 

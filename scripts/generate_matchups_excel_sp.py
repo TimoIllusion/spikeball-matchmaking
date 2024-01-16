@@ -4,24 +4,21 @@ from matchmaking.utils import export_to_excel
 
 def main():
     NUM_ITERATIONS = 100000
-
     NUM_ROUNDS = 10
     NUM_FIELDS = 1
 
     players = [
-        # Player("Diana"), 
-        # Player("Marco"), 
-        # Player("Peggy"), 
-        Player("Freddy"), 
-        Player("Frederik"), 
-        # Player("Manuel"), 
-        # Player("Melike"), 
-        Player("Dascha"),
-        # Player("Corasti"),
-        # Player("Ben"),
-        # Player("Julius"),
-        Player("Timo"),
-        Player("Christian")
+        Player("A"),
+        Player("B"),
+        Player("C"),
+        Player("D"),
+        Player("E"),
+        Player("F"),
+        Player("G"),
+        Player("H"),
+        Player("I"),
+        Player("J"),
+        Player("K"),
         ]
     
     WEIGHT_METRIC_CONFIG = [
@@ -33,7 +30,7 @@ def main():
         (5.0, "global_player_engagement_index"),
         (5.0, "global_teammate_variety_index"),
         (5.0, "global_enemy_team_variety_index"),
-        (5.0, "global_break_occurence_index"), # 0.0-5.0
+        (5.0, "global_break_occurrence_index"), # 0.0-5.0
         (5.0, "global_break_shortness_index"), # 0.0-5.0
         ]
     
