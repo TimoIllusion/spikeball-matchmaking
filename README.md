@@ -1,6 +1,6 @@
 # Spikeball Matchmaking
 
-Streamlit app automatically generate matchups for Spikeball or 2v2 games in general.
+Streamlit app automatically generates optimal matchups depending on several conditions like amount of breaks, variety of opponents and team compositions etc. for Spikeball or 2v2 games in general.
 
 This app is hosted on [Steamlit.io](https://spikeball.streamlit.app/).
 
