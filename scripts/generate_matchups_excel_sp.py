@@ -24,6 +24,7 @@ def main():
     WEIGHT_METRIC_CONFIG = [
         (100000.0, "global_not_playing_players_index"),
         (10000.0, "global_played_matches_index"),
+        (100.0, "global_matchup_length_index"),
         (10.0, "global_player_engagement_fairness_index"),
         (10.0, "global_teammate_succession_index"),
         (10.0, "global_enemy_team_succession_index"),

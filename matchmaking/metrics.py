@@ -6,19 +6,19 @@ import numpy as np
 
 from matchmaking.data import Matchup, Team, Player
 
-def _find_consecutive_zeros(arr):
+def _find_consecutive_numbers(arr, target_number: int):
     lengths = []
     length = 0
     
     for num in arr:
-        if num == 0:
+        if num == target_number:
             length += 1
         else:
             if length > 0:
                 lengths.append(length)
             length = 0
             
-    # Account for a trailing sequence of zeros
+    # Account for a trailing sequence of target_number
     if length > 0:
         lengths.append(length)
         
@@ -68,6 +68,8 @@ def _get_enemy_teams(matchups: List[Matchup], player_uid: str) -> List[str]:
     return enemy_team_uids, enemy_player_uids
 
 #TODO: fix break calculation for multiple fields
+#TODO: find a way to incorporate time between breaks as metric (matchup_lengths_played_between_breaks)
+#TODO: optimize for 5 and 6 players (most common normal player counts for single net)
 def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, weights_and_metrics: List[Tuple[float, str]]) -> int:
     
     # get unique player identifiers
@@ -83,7 +85,8 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, w
     results = {}
     for player_uid in unique_players:
         played_matches = [player_uid in x.get_all_player_uids() for x in matchups]
-        break_lengths = _find_consecutive_zeros(played_matches)
+        break_lengths = _find_consecutive_numbers(played_matches, 0)
+        matchup_lengths_played_between_breaks = _find_consecutive_numbers(played_matches, 1)
         
         teammates = _get_teammates(matchups, player_uid)
         consecutive_teammates_hist = _count_consecutive_occurences(teammates)
@@ -95,6 +98,9 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, w
         unique_people_played_with_or_against = list(set(enemy_players + teammates))
         
         break_lengths_stdev = statistics.stdev(break_lengths) if len(break_lengths) > 1 else 0.0
+        
+        # only take second length if available, otherwise set to 10.0
+        matchup_lengths_played_between_breaks_second_length = matchup_lengths_played_between_breaks[1] if len(matchup_lengths_played_between_breaks) > 1 else 10.0
         
         teammate_hist = Counter(teammates)
         
@@ -109,6 +115,8 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, w
             "break_lengths_avg": np.mean(break_lengths), 
             "break_lengths_stdev": break_lengths_stdev, 
             "break_lengths_hist": Counter(break_lengths),
+            "matchup_lengths_played_between_breaks_second_length": matchup_lengths_played_between_breaks_second_length, # optimized for short sessions
+            "matchup_lengths": matchup_lengths_played_between_breaks,
             "teammate_hist": teammate_hist,
             "teammate_hist_stdev": teammate_hist_stdev,
             "enemy_teams_hist": enemy_teams_hist,
@@ -135,6 +143,9 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, w
     global_per_player_break_lengths_avg_squared = [x**2 for x in global_per_player_break_lengths_avg]
     global_break_shortness_index = sum(global_per_player_break_lengths_avg_squared)
     
+    per_player_matchup_length_second_element = [results[x]["matchup_lengths_played_between_breaks_second_length"] for x in results.keys()]
+    global_matchup_length_index = statistics.stdev(per_player_matchup_length_second_element)
+    
     per_player_teammate_hist_stdev = [results[x]["teammate_hist_stdev"] for x in results.keys()]
     global_teammate_variety_index = sum(per_player_teammate_hist_stdev)
     
@@ -156,6 +167,7 @@ def get_avg_matchup_diversity_score(matchups: List[Matchup], num_players: int, w
     global_results = {
         "global_not_playing_players_index": global_not_playing_players_index,
         "global_played_matches_index": global_played_matches_index,
+        "global_matchup_length_index": global_matchup_length_index,
         "global_break_occurrence_index": global_break_occurrence_index,
         "global_break_shortness_index": global_break_shortness_index,
         "global_teammate_variety_index": global_teammate_variety_index,
