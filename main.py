@@ -97,7 +97,7 @@ def configure():
     st.write("#### Metric Weights")
     st.session_state.WEIGHT_METRIC_CONFIG["global_not_playing_players_index"] = 100000.0
     st.session_state.WEIGHT_METRIC_CONFIG["global_played_matches_index"] = 10000.0
-    st.session_state.WEIGHT_METRIC_CONFIG["global_matchup_length_index"] = st.slider('Weight for Global Matchup Length Index:', 0.0, 100.0, 100.0)
+    st.session_state.WEIGHT_METRIC_CONFIG["global_matchup_length_index"] = st.slider('Weight for Global Matchup Length Index:', 0.0, 100.0, 10000.0)
     st.session_state.WEIGHT_METRIC_CONFIG["global_player_engagement_fairness_index"] = st.slider('Weight for Global Player Engagement Fairness Index:', 0.0, 100.0, 10.0)
     st.session_state.WEIGHT_METRIC_CONFIG["global_teammate_succession_index"] = st.slider('Weight for Global Teammate Succession Index:', 0.0, 100.0, 10.0)
     st.session_state.WEIGHT_METRIC_CONFIG["global_enemy_team_succession_index"] = st.slider('Weight for Global Enemy Team Succession Index:', 0.0, 100.0, 10.0)
