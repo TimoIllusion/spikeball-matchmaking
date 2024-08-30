@@ -31,6 +31,7 @@ class Player:
     
     def __repr__(self) -> str:
         return self.__str__()
+        
 
 class Team:
     unique_identifier: str

@@ -39,16 +39,20 @@ Follow these steps to set up the app locally:
 
 Generate excel tables for a tournament with these scripts.
 
+
+
 Assuming already set up and activated python environment:
+
+1. Configure the config.py in root of this repo depending on your requirements.
+
+2. Install the package:
 
 ```bash
 cd spikeball-matchmaking
 pip install .
 ```
+3. Run the script:
 
 ```bash
-# single process used
-python scripts/generate_matchups_excel_sp.py 
-# multiple processes used
-python scripts/generate_matchups_excel_mp.py 
+python generate_matchups_excel_sheet.py 
 ```

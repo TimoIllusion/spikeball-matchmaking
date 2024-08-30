@@ -1,3 +1,6 @@
 streamlit
 numpy
 tqdm
+psutil
+openpyxl
+pytest
