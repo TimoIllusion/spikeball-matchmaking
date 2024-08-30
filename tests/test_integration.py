@@ -1,10 +1,17 @@
 from matchmaking.data import Player
 from matchmaking.generator import get_most_diverse_matchups
 
+# fix random seeds
+import random
+
+random.seed(42)
+
+import numpy as np
+
+np.random.seed(42)
+
 
 def test_matchup_generation():
-
-    # TODO: fix random seed of numpy and random python module
 
     players = [
         Player("A"),
@@ -37,4 +44,12 @@ def test_matchup_generation():
         players, num_rounds, num_fields, num_iterations, metric_config
     )
 
-    assert len(best_matchup_config) > 0
+    print(best_matchup_config)
+
+    assert (
+        best_score == 5404.723502208126
+    ), "Unexpected score result. Did the metrics change?"
+
+
+if __name__ == "__main__":
+    test_matchup_generation()
