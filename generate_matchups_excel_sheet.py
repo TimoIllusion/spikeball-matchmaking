@@ -10,7 +10,7 @@ def main():
     players = [Player(p) for p in PLAYER_NAMES]
 
     best_matchup_config, best_score, results = get_most_diverse_matchups(
-        players, NUM_ROUNDS, NUM_FIELDS, NUM_ITERATIONS, WEIGHT_METRIC_CONFIG
+        players, NUM_ROUNDS, NUM_FIELDS, NUM_ITERATIONS, METRIC_WEIGHTS_CONFIG
     )
 
     export_to_excel(
