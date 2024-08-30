@@ -1,15 +1,54 @@
 # Spikeball Matchmaking
 
-This Streamlit app automatically generates optimal matchups depending on several conditions like amount of breaks, variety of opponents and team compositions etc. for Spikeball or 2v2 games in general.
+This Streamlit app automatically generates optimal matchups for Spikeball or other 2v2 games. It considers several factors like the number of breaks, variety of opponents, and team compositions to ensure balanced and enjoyable games.
 
-This app is hosted on [Steamlit.io](https://spikeball.streamlit.app/).
+You can access the app online [here](https://spikeball.streamlit.app/).
 
-## Local Setup
+## Local Setup With Streamlit
 
-1. ```git clone https://github.com/TimoIllusion/spikeball-matchmaking.git```
-2. `cd spikeball-matchmaking`
-3. `conda create -n spikeballmm python=3.10`
-4. `conda activate spikeballmm`
-5. `pip install -r requirements.txt`
-6. `streamlit run main.py`
-7. Open http://localhost:8501/ (if it does not open automatically).
+Follow these steps to set up the app locally:
+
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/TimoIllusion/spikeball-matchmaking.git
+   ```
+2. **Navigate to the Project Directory:**
+   ```bash
+   cd spikeball-matchmaking
+   ```
+3. **Create a Conda Environment with Python 3.10:**
+   ```bash
+   conda create -n spikeballmm python=3.10
+   ```
+4. **Activate the Environment:**
+   ```bash
+   conda activate spikeballmm
+   ```
+5. **Install the Required Packages:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+6. **Run the Streamlit App:**
+   ```bash
+   streamlit run main.py
+   ```
+7. **Access the App:**
+   - Open [http://localhost:8501/](http://localhost:8501/) in your web browser (it should open automatically).
+
+## Run Scripts For Offline Matchmaking
+
+Generate excel tables for a tournament with these scripts.
+
+Assuming already set up and activated python environment:
+
+```bash
+cd spikeball-matchmaking
+pip install .
+```
+
+```bash
+# single process used
+python scripts/generate_matchups_excel_sp.py 
+# multiple processes used
+python scripts/generate_matchups_excel_mp.py 
+```
