@@ -2,7 +2,7 @@ import psutil
 
 NUM_ITERATIONS = 10000
 NUM_ROUNDS = 10
-NUM_FIELDS = 1
+NUM_FIELDS = 3
 
 PLAYER_NAMES = [
     "A",
