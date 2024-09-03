@@ -236,19 +236,18 @@ def get_avg_matchup_diversity_score(
     )
 
     # TODO: calculate entropy, energy or something similar to quantify how good the variety of matchups played is
-
     global_results = {
-        "global_not_playing_players_index": global_not_playing_players_index,
-        "global_played_matches_index": global_played_matches_index,
-        "global_matchup_length_index": global_matchup_length_index,
-        "global_break_occurrence_index": global_break_occurrence_index,
-        "global_break_shortness_index": global_break_shortness_index,
-        "global_teammate_variety_index": global_teammate_variety_index,
-        "global_enemy_team_variety_index": global_enemy_team_variety_index,
-        "global_teammate_succession_index": global_teammate_succession_index,
-        "global_enemy_team_succession_index": global_enemy_team_succession_index,
-        "global_player_engagement_index": global_player_engagement_index,
-        "global_player_engagement_fairness_index": global_player_engagement_fairness_index,
+        MetricType.GLOBAL_NOT_PLAYING_PLAYERS_INDEX.value: global_not_playing_players_index,
+        MetricType.GLOBAL_PLAYED_MATCHES_INDEX.value: global_played_matches_index,
+        MetricType.GLOBAL_MATCHUP_LENGTH_INDEX.value: global_matchup_length_index,
+        MetricType.GLOBAL_BREAK_OCCURRENCE_INDEX.value: global_break_occurrence_index,
+        MetricType.GLOBAL_BREAK_SHORTNESS_INDEX.value: global_break_shortness_index,
+        MetricType.GLOBAL_TEAMMATE_VARIETY_INDEX.value: global_teammate_variety_index,
+        MetricType.GLOBAL_ENEMY_TEAM_VARIETY_INDEX.value: global_enemy_team_variety_index,
+        MetricType.GLOBAL_TEAMMATE_SUCCESSION_INDEX.value: global_teammate_succession_index,
+        MetricType.GLOBAL_ENEMY_TEAM_SUCCESSION_INDEX.value: global_enemy_team_succession_index,
+        MetricType.GLOBAL_PLAYER_ENGAGEMENT_INDEX.value: global_player_engagement_index,
+        MetricType.GLOBAL_PLAYER_ENGAGEMENT_FAIRNESS_INDEX.value: global_player_engagement_fairness_index,
     }
 
     results["global"] = global_results
