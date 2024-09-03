@@ -19,11 +19,11 @@ PLAYER_NAMES = [
     "P10",
     "P11",
     "P12",
-    "P13"
+    "P13",
 ]
 
 
 METRIC_WEIGHTS_CONFIG = MetricWeightsConfig()
 
 
-WORKERS = psutil.cpu_count()
+WORKERS = 1  # psutil.cpu_count()

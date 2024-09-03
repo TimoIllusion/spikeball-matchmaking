@@ -52,15 +52,6 @@ class MatchupDiversityOptimizer:
         results, _ = get_avg_matchup_diversity_score(
             self.best_matchup_config, len(self.players), self.weights_and_metrics
         )
-        pprint(results)
-
-        print(self.best_scores)
-        print("=====================================")
-        [
-            print(f"{i} - {i % self.num_fields} - {x}")
-            for i, x in enumerate(self.best_matchup_config)
-        ]
-        print("matchup_diversity_index (lower is better):", self.min_score)
 
         return (
             self.best_matchup_config,
@@ -102,7 +93,7 @@ class MatchupDiversityOptimizer:
         self,
         matchups: List[Matchup],
         min_score: float,
-        best_matchup_config: List[Matchup],
+        best_matchup_set: List[Matchup],
         iter: int,
     ) -> Tuple[List[Matchup], float]:
         """
@@ -113,10 +104,10 @@ class MatchupDiversityOptimizer:
         )
 
         if score < min_score:
-            best_matchup_config = deepcopy(matchups)
+            best_matchup_set = deepcopy(matchups)
             min_score = score
             self.best_scores.append(min_score)
             self.best_scores_iterations.append(iter)
             print("Got new minimal index: ", min_score)
 
-        return best_matchup_config, min_score
+        return best_matchup_set, min_score

@@ -25,6 +25,10 @@ def main():
         optimizer.get_most_diverse_matchups()
     )
 
+    Visualizer.print_results_to_console(
+        best_matchup_config, NUM_FIELDS, NUM_ROUNDS, best_score, results, players
+    )
+
     best_scores_plot_img = Visualizer.plot_best_scores(
         best_scores, best_scores_iterations
     )
