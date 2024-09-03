@@ -2,16 +2,15 @@ from typing import List, Optional
 
 
 class Player:
-    unique_identifier: str
-    name: str
-    draft_probability_score: float
 
-    def __init__(self, name):
-        self.name = name
-        self.draft_probability_score = 1.0
+    def __init__(self, name: str):
+        self.name: str = name
+        self.draft_probability_score: float = 1.0
+        self.unique_identifier: str = ""
 
         self._initialize_unique_identifier()
 
+    # TODO: actually use a real unique identifier(-suffix)
     def _initialize_unique_identifier(self):
         self.unique_identifier = self.name
 
@@ -28,20 +27,18 @@ class Player:
         self.draft_probability_score += value
 
     def __str__(self) -> str:
-        return self.get_unique_identifier()
+        return self.name
 
     def __repr__(self) -> str:
         return self.__str__()
 
 
 class Team:
-    unique_identifier: str
-    player_1: Player
-    player_2: Player
 
     def __init__(self, player_1: Player, player_2: Player):
-        self.player_1 = player_1
-        self.player_2 = player_2
+        self.player_1: Player = player_1
+        self.player_2: Player = player_2
+        self.unique_identifier: str = ""
 
         self._initialize_unique_identifier()
 
@@ -76,13 +73,11 @@ class Team:
 
 
 class Matchup:
-    unique_identifier: str
-    team_a: Team
-    team_b: Team
 
     def __init__(self, team_a, team_b):
-        self.team_a = team_a
-        self.team_b = team_b
+        self.team_a: Team = team_a
+        self.team_b: Team = team_b
+        self.unique_identifier: str = ""
 
         self._initialize_unique_identifier()
 

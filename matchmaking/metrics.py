@@ -30,8 +30,8 @@ def _find_consecutive_numbers(arr, target_number: int):
     return lengths
 
 
-def _get_teammates(matchups: List[Matchup], player_uid: str) -> List[str]:
-    teammates = []
+def _get_teammate_uids(matchups: List[Matchup], player_uid: str) -> List[str]:
+    teammate_uids = []
 
     for matchup in matchups:
         if player_uid in matchup.get_all_player_uids():
@@ -39,9 +39,13 @@ def _get_teammates(matchups: List[Matchup], player_uid: str) -> List[str]:
 
             if teammate is not None:
                 teammate_uid = teammate.get_unique_identifier()
-                teammates.append(teammate_uid)
+                teammate_uids.append(teammate_uid)
 
-    return teammates
+    assert (
+        player_uid not in teammate_uids
+    ), "Player should not be in the list of teammates"
+
+    return teammate_uids
 
 
 def _count_consecutive_occurences(list_of_symbols: List[str]) -> Counter:
@@ -60,7 +64,9 @@ def _count_consecutive_occurences(list_of_symbols: List[str]) -> Counter:
     return counter
 
 
-def _get_enemy_teams(matchups: List[Matchup], player_uid: str) -> List[str]:
+def _get_enemy_teams(
+    matchups: List[Matchup], player_uid: str
+) -> Tuple[List[str], List[str]]:
 
     enemy_team_uids = []
     enemy_player_uids = []
@@ -71,6 +77,10 @@ def _get_enemy_teams(matchups: List[Matchup], player_uid: str) -> List[str]:
             enemy_team_uid = enemy_team.get_unique_identifier()
             enemy_team_uids.append(enemy_team_uid)
             enemy_player_uids.extend(enemy_team.get_all_player_uids())
+
+    assert (
+        player_uid not in enemy_player_uids
+    ), "Player should not be in the list of enemies"
 
     return enemy_team_uids, enemy_player_uids
 
@@ -116,16 +126,20 @@ class PlayerMetricCalculator:
             self.played_matches, 1
         )
 
-        self.teammates = _get_teammates(self.matchups, self.player_uid)
-        self.teammate_hist = Counter(self.teammates)
-        self.consecutive_teammates_hist = _count_consecutive_occurences(self.teammates)
+        self.teammate_uids = _get_teammate_uids(self.matchups, self.player_uid)
+        self.teammate_hist = Counter(self.teammate_uids)
+        self.consecutive_teammates_hist = _count_consecutive_occurences(
+            self.teammate_uids
+        )
 
-        self.enemies, self.enemy_players = _get_enemy_teams(
+        self.enemy_team_uids, self.enemy_player_uids = _get_enemy_teams(
             self.matchups, self.player_uid
         )
-        self.enemy_teams_hist = Counter(self.enemies)
+        self.enemy_teams_hist = Counter(self.enemy_team_uids)
 
-        self.consecutive_enemies_hist = _count_consecutive_occurences(self.enemies)
+        self.consecutive_enemies_hist = _count_consecutive_occurences(
+            self.enemy_team_uids
+        )
 
     def compute_num_played_matches(self):
         return sum(self.played_matches)
@@ -184,10 +198,12 @@ class PlayerMetricCalculator:
         return sum(list(self.consecutive_enemies_hist.values()))
 
     def compute_unique_people_played_with_or_against(self):
-        return len(set(self.enemy_players + self.teammates))
+        return len(set(self.enemy_player_uids + self.teammate_uids))
 
     def compute_unique_people_not_played_with_or_against(self):
-        return (self.num_players - 1) - len(set(self.enemy_players + self.teammates))
+        return (self.num_players - 1) - len(
+            set(self.enemy_player_uids + self.teammate_uids)
+        )
 
     def calculate_player_stats(self) -> PlayerStatistics:
         return PlayerStatistics(

@@ -9,7 +9,7 @@ NUM_ROUNDS = 13
 NUM_FIELDS = 3
 
 PLAYER_NAMES = [
-    "P1",
+    "P01",
     "P2",
     "P3",
     "P4",

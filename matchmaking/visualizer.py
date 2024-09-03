@@ -8,6 +8,7 @@ import cv2
 
 from matchmaking.data import Matchup, Player
 from matchmaking.metric_type import MetricType
+from matchmaking.metrics import PlayerStatistics
 
 
 class Visualizer:
@@ -87,10 +88,16 @@ class Visualizer:
             MetricType.GLOBAL_PLAYED_MATCHES_INDEX.name,
             global_results[MetricType.GLOBAL_PLAYED_MATCHES_INDEX.value],
         )
-        print(
-            MetricType.GLOBAL_ENEMY_TEAM_VARIETY_INDEX.name,
-            global_results[MetricType.GLOBAL_ENEMY_TEAM_VARIETY_INDEX.value],
-        )
+        print()
+
+        for player in players:
+            player_uid = player.get_unique_identifier()
+
+            player_stats: PlayerStatistics = results[player_uid]
+
+            print(
+                f"Player {player_uid} - Unique players not played with: {player_stats.unique_people_not_played_with_or_against}"
+            )
 
         print()
         print("====== OVERALL ======")

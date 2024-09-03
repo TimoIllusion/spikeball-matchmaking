@@ -31,6 +31,26 @@ class MatchupDiversityOptimizer:
         self.min_score = np.inf
         self.best_matchup_config = None
 
+        assert (
+            self.player_uids_are_unique()
+        ), "Player UIDs are not unique! Maybe some names are part of other names? (e.g. 'John' and 'Johnny')"
+
+    def player_uids_are_unique(self) -> bool:
+        player_uids = [player.get_unique_identifier() for player in self.players]
+
+        for i in range(len(player_uids)):
+
+            reference_player_uid = player_uids[i]
+
+            for j in range(len(player_uids)):
+                if i == j:
+                    continue
+
+                if reference_player_uid in player_uids[j]:
+                    return False
+
+        return True
+
     def get_most_diverse_matchups(
         self,
     ) -> Tuple[List[Matchup], float, dict, List[float], List[int]]:
@@ -65,9 +85,12 @@ class MatchupDiversityOptimizer:
         """
         Sample matchups from the player pool ensuring no player is repeated in the current round.
         """
+
+        player_names = [player.name for player in self.players]
+
         while True:
             selected_players = np.random.choice(
-                self.players, replace=False, size=4 * self.num_fields
+                player_names, replace=False, size=4 * self.num_fields
             ).tolist()
             temp_matchups = [
                 Matchup.from_names(*selected_players[j * 4 : j * 4 + 4])
