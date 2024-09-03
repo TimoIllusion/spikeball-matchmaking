@@ -2,7 +2,7 @@ import psutil
 from matchmaking.metric_type import MetricType
 from matchmaking.config import MetricWeightsConfig
 
-NUM_ITERATIONS = 1000
+NUM_ITERATIONS = 10000
 NUM_ROUNDS = 13
 NUM_FIELDS = 3
 
@@ -26,4 +26,4 @@ PLAYER_NAMES = [
 METRIC_WEIGHTS_CONFIG = MetricWeightsConfig()
 
 
-WORKERS = 1  # psutil.cpu_count()
+WORKERS = psutil.cpu_count()
