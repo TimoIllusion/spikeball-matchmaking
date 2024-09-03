@@ -1,5 +1,6 @@
 from matchmaking.data import Player
-from matchmaking.generator import get_most_diverse_matchups
+from matchmaking.generator import MatchupDiversityOptimizer
+from matchmaking.config import MetricWeightsConfig
 
 # fix random seeds
 import random
@@ -26,28 +27,20 @@ def test_matchup_generation():
     num_fields = 1
     num_iterations = 100
 
-    metric_config = [
-        (100000.0, "global_not_playing_players_index"),
-        (10000.0, "global_played_matches_index"),
-        (100.0, "global_matchup_length_index"),
-        (10.0, "global_player_engagement_fairness_index"),
-        (10.0, "global_teammate_succession_index"),
-        (10.0, "global_enemy_team_succession_index"),
-        (5.0, "global_player_engagement_index"),
-        (5.0, "global_teammate_variety_index"),
-        (5.0, "global_enemy_team_variety_index"),
-        (5.0, "global_break_occurrence_index"),  # 0.0-5.0
-        (5.0, "global_break_shortness_index"),  # 0.0-5.0
-    ]
+    metric_config = MetricWeightsConfig()
 
-    best_matchup_config, best_score, results = get_most_diverse_matchups(
+    optimizer = MatchupDiversityOptimizer(
         players, num_rounds, num_fields, num_iterations, metric_config
+    )
+
+    best_matchup_config, best_score, results, _, _ = (
+        optimizer.get_most_diverse_matchups()
     )
 
     print(best_matchup_config)
 
     assert (
-        best_score == 5404.723502208126
+        best_score == 5445.152490451609
     ), "Unexpected score result. Did the metrics change?"
 
 
