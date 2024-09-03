@@ -1,7 +1,7 @@
 import streamlit as st
 
 from matchmaking.data import Player
-from matchmaking.generator import get_most_diverse_matchups
+from matchmaking.generator import MatchupDiversityOptimizer
 from matchmaking.metric_type import MetricType
 from matchmaking.config import MetricWeightsConfig
 
@@ -83,12 +83,16 @@ def _gen_matchup_batch() -> None:
 
     print(st.session_state.WEIGHT_METRIC_CONFIG.weight_per_metric)
 
-    best_matchup_config, best_score, results, _, _ = get_most_diverse_matchups(
+    optimizer = MatchupDiversityOptimizer(
         st.session_state.players,
         st.session_state.NUM_ROUNDS,
         st.session_state.NUM_FIELDS,
         st.session_state.NUM_ITERATIONS,
         st.session_state.WEIGHT_METRIC_CONFIG,
+    )
+
+    best_matchup_config, best_score, results, _, _ = (
+        optimizer.get_most_diverse_matchups()
     )
 
     st.session_state.matchups = best_matchup_config

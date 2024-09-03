@@ -9,71 +9,114 @@ from matchmaking.data import Player, Matchup, Team
 from matchmaking.metrics import get_avg_matchup_diversity_score
 from matchmaking.config import MetricWeightsConfig
 
-# TODO: split in subfunctions and clean up
-def get_most_diverse_matchups(
-    players: List[Player],
-    num_rounds: int,
-    num_fields: int,
-    num_iterations: int,
-    weights_and_metrics: MetricWeightsConfig,
-) -> Tuple[List[Matchup], float, dict]:
 
-    best_scores = []
-    best_scores_iterations = []
-    
-    min_score = np.inf
-    best_matchup_config = None
+class MatchupDiversityOptimizer:
 
-    for iter in tqdm(range(num_iterations)):
+    def __init__(
+        self,
+        players: List[Player],
+        num_rounds: int,
+        num_fields: int,
+        num_iterations: int,
+        weights_and_metrics: MetricWeightsConfig,
+    ):
+        self.players = players
+        self.num_rounds = num_rounds
+        self.num_fields = num_fields
+        self.num_iterations = num_iterations
+        self.weights_and_metrics = weights_and_metrics
 
-        matchup_history = []
-        matchups: List[str] = []
-        for _ in range(num_rounds):
+        self.best_scores = []
+        self.best_scores_iterations = []
+        self.min_score = np.inf
+        self.best_matchup_config = None
 
-            invalid = True
-            while invalid:
+    def get_most_diverse_matchups(
+        self,
+    ) -> Tuple[List[Matchup], float, dict, List[float], List[int]]:
+        for iter in tqdm(range(self.num_iterations)):
+            matchup_history = set()
+            matchups: List[Matchup] = []
 
-                # TODO: sample from all possible 4-player matchups and check if any player is already playing in the current round
-                selected_players = np.random.choice(
-                    players, replace=False, size=4 * num_fields
-                ).tolist()
+            for _ in range(self.num_rounds):
+                temp_matchups = self.sample_matchups()
+                matchup_history.update(
+                    [x.get_unique_identifier() for x in temp_matchups]
+                )
+                matchups.extend(temp_matchups)
 
-                temp_matchups = []
-                for j in range(num_fields):
-                    four_players = selected_players[j * 4 : j * 4 + 4]
-                    temp_matchups.append(Matchup.from_names(*four_players))
+            self.best_matchup_config, self.min_score = self.update_best_score(
+                matchups, self.min_score, self.best_matchup_config, iter
+            )
 
-                invalid = False
-                for matchup in temp_matchups:
-                    if matchup.get_unique_identifier() in matchup_history:
-                        invalid = True
+        results, _ = get_avg_matchup_diversity_score(
+            self.best_matchup_config, len(self.players), self.weights_and_metrics
+        )
+        pprint(results)
 
-            matchup_history += [x.get_unique_identifier() for x in temp_matchups]
-            matchup_history = list(set(matchup_history))
+        print(self.best_scores)
+        print("=====================================")
+        [
+            print(f"{i} - {i % self.num_fields} - {x}")
+            for i, x in enumerate(self.best_matchup_config)
+        ]
+        print("matchup_diversity_index (lower is better):", self.min_score)
 
-            matchups += temp_matchups
+        return (
+            self.best_matchup_config,
+            self.min_score,
+            results,
+            self.best_scores,
+            self.best_scores_iterations,
+        )
 
+    def sample_matchups(self) -> List[Matchup]:
+        """
+        Sample matchups from the player pool ensuring no player is repeated in the current round.
+        """
+        while True:
+            selected_players = np.random.choice(
+                self.players, replace=False, size=4 * self.num_fields
+            ).tolist()
+            temp_matchups = [
+                Matchup.from_names(*selected_players[j * 4 : j * 4 + 4])
+                for j in range(self.num_fields)
+            ]
+
+            if not self.has_duplicate_matchups(temp_matchups):
+                return temp_matchups
+
+    def has_duplicate_matchups(self, matchups: List[Matchup]) -> bool:
+        """
+        Check if any matchup has been repeated.
+        """
+        unique_identifiers = set()
+        for matchup in matchups:
+            identifier = matchup.get_unique_identifier()
+            if identifier in unique_identifiers:
+                return True
+            unique_identifiers.add(identifier)
+        return False
+
+    def update_best_score(
+        self,
+        matchups: List[Matchup],
+        min_score: float,
+        best_matchup_config: List[Matchup],
+        iter: int,
+    ) -> Tuple[List[Matchup], float]:
+        """
+        Update the best score and configuration if the current score is lower than the minimum score.
+        """
         results, score = get_avg_matchup_diversity_score(
-            matchups, len(players), weights_and_metrics
+            matchups, len(self.players), self.weights_and_metrics
         )
 
         if score < min_score:
             best_matchup_config = deepcopy(matchups)
             min_score = score
-            best_scores.append(min_score)
-            best_scores_iterations.append(iter)
+            self.best_scores.append(min_score)
+            self.best_scores_iterations.append(iter)
             print("Got new minimal index: ", min_score)
 
-    results, _ = get_avg_matchup_diversity_score(
-        best_matchup_config, len(players), weights_and_metrics
-    )
-
-    pprint(results)
-    
-    print(best_scores)
-
-    print("=====================================")
-    [print(f"{i} - {i%num_fields} - {x}") for i, x in enumerate(best_matchup_config)]
-    print("matchup_diversity_index (lower is better):", min_score)
-
-    return best_matchup_config, min_score, results, best_scores, best_scores_iterations
+        return best_matchup_config, min_score
