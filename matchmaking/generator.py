@@ -9,7 +9,6 @@ from matchmaking.data import Player, Matchup, Team
 from matchmaking.metrics import get_avg_matchup_diversity_score
 from matchmaking.config import MetricWeightsConfig
 
-
 # TODO: split in subfunctions and clean up
 def get_most_diverse_matchups(
     players: List[Player],
@@ -20,26 +19,24 @@ def get_most_diverse_matchups(
 ) -> Tuple[List[Matchup], float, dict]:
 
     best_scores = []
+    best_scores_iterations = []
+    
     min_score = np.inf
     best_matchup_config = None
 
-    for _ in tqdm(range(num_iterations)):
+    for iter in tqdm(range(num_iterations)):
 
         matchup_history = []
         matchups: List[str] = []
-        for r in range(num_rounds):
-            # print("Round " + str(r + 1))
+        for _ in range(num_rounds):
 
             invalid = True
             while invalid:
-
-                # print("try")
 
                 # TODO: sample from all possible 4-player matchups and check if any player is already playing in the current round
                 selected_players = np.random.choice(
                     players, replace=False, size=4 * num_fields
                 ).tolist()
-                # print(selected_players)
 
                 temp_matchups = []
                 for j in range(num_fields):
@@ -56,18 +53,15 @@ def get_most_diverse_matchups(
 
             matchups += temp_matchups
 
-        # print(matchups)
-
         results, score = get_avg_matchup_diversity_score(
             matchups, len(players), weights_and_metrics
         )
-        # pprint(results)
-        # print(value)
 
         if score < min_score:
             best_matchup_config = deepcopy(matchups)
             min_score = score
             best_scores.append(min_score)
+            best_scores_iterations.append(iter)
             print("Got new minimal index: ", min_score)
 
     results, _ = get_avg_matchup_diversity_score(
@@ -75,10 +69,11 @@ def get_most_diverse_matchups(
     )
 
     pprint(results)
+    
     print(best_scores)
 
     print("=====================================")
     [print(f"{i} - {i%num_fields} - {x}") for i, x in enumerate(best_matchup_config)]
     print("matchup_diversity_index (lower is better):", min_score)
 
-    return best_matchup_config, min_score, results
+    return best_matchup_config, min_score, results, best_scores, best_scores_iterations

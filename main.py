@@ -83,7 +83,7 @@ def _gen_matchup_batch() -> None:
 
     print(st.session_state.WEIGHT_METRIC_CONFIG.weight_per_metric)
 
-    best_matchup_config, best_score, results = get_most_diverse_matchups(
+    best_matchup_config, best_score, results, _, _ = get_most_diverse_matchups(
         st.session_state.players,
         st.session_state.NUM_ROUNDS,
         st.session_state.NUM_FIELDS,

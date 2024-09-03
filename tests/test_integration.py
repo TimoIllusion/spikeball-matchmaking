@@ -29,7 +29,7 @@ def test_matchup_generation():
 
     metric_config = MetricWeightsConfig()
 
-    best_matchup_config, best_score, results = get_most_diverse_matchups(
+    best_matchup_config, best_score, results, _, _ = get_most_diverse_matchups(
         players, num_rounds, num_fields, num_iterations, metric_config
     )
 
