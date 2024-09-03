@@ -13,3 +13,4 @@ class MetricType(Enum):
     GLOBAL_ENEMY_TEAM_VARIETY_INDEX = "global_enemy_team_variety_index"
     GLOBAL_BREAK_OCCURRENCE_INDEX = "global_break_occurrence_index"
     GLOBAL_BREAK_SHORTNESS_INDEX = "global_break_shortness_index"
+    GLOBAL_NOT_PLAYED_AGAINST_PLAYERS_INDEX = "global_not_played_against_players_index"

@@ -315,6 +315,13 @@ class GlobalMetricCalculator:
         ]
         return statistics.stdev(per_player_unique_people_not_played_with_or_against)
 
+    def compute_not_played_players_index(self) -> float:
+        per_player_unique_people_not_played_with_or_against = [
+            stat.unique_people_not_played_with_or_against
+            for stat in self.player_stats.values()
+        ]
+        return sum(per_player_unique_people_not_played_with_or_against)
+
     def calculate_global_stats(self) -> Dict[str, float]:
         stats = {
             MetricType.GLOBAL_NOT_PLAYING_PLAYERS_INDEX.value: self.compute_not_playing_players_index(),
@@ -328,6 +335,7 @@ class GlobalMetricCalculator:
             MetricType.GLOBAL_ENEMY_TEAM_SUCCESSION_INDEX.value: self.compute_enemy_team_succession_index(),
             MetricType.GLOBAL_PLAYER_ENGAGEMENT_INDEX.value: self.compute_player_engagement_index(),
             MetricType.GLOBAL_PLAYER_ENGAGEMENT_FAIRNESS_INDEX.value: self.compute_player_engagement_fairness_index(),
+            MetricType.GLOBAL_NOT_PLAYED_AGAINST_PLAYERS_INDEX.value: self.compute_not_played_players_index(),
         }
         return stats
 
