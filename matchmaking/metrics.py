@@ -224,6 +224,98 @@ def _calculate_all_player_statistics(
     return results
 
 
+class GlobalMetricCalculator:
+    def __init__(self, player_stats: Dict[str, PlayerStatistics], num_players: int):
+        self.player_stats = player_stats
+        self.num_players = num_players
+
+    def compute_not_playing_players_index(self) -> int:
+        unique_players = len(self.player_stats)
+        return self.num_players - unique_players
+
+    def compute_played_matches_index(self) -> float:
+        global_num_played_matches = [
+            stat.num_played_matches for stat in self.player_stats.values()
+        ]
+        return statistics.stdev(global_num_played_matches)
+
+    def compute_break_occurrence_index(self) -> float:
+        global_break_lengths_stdev = [
+            stat.break_lengths_stdev for stat in self.player_stats.values()
+        ]
+        return sum(global_break_lengths_stdev)
+
+    def compute_break_shortness_index(self) -> float:
+        global_per_player_break_lengths_avg = [
+            stat.break_lengths_avg for stat in self.player_stats.values()
+        ]
+        global_per_player_break_lengths_avg_squared = [
+            x**2 for x in global_per_player_break_lengths_avg
+        ]
+        return sum(global_per_player_break_lengths_avg_squared)
+
+    def compute_matchup_length_index(self) -> float:
+        per_player_matchup_length_second_element = [
+            stat.matchup_lengths_played_between_breaks_second_length
+            for stat in self.player_stats.values()
+        ]
+        return statistics.stdev(per_player_matchup_length_second_element)
+
+    def compute_teammate_variety_index(self) -> float:
+        per_player_teammate_hist_stdev = [
+            stat.teammate_hist_stdev for stat in self.player_stats.values()
+        ]
+        return sum(per_player_teammate_hist_stdev)
+
+    def compute_enemy_team_variety_index(self) -> float:
+        per_player_enemy_teams_hist_stdev = [
+            stat.enemy_teams_hist_stdev for stat in self.player_stats.values()
+        ]
+        return sum(per_player_enemy_teams_hist_stdev)
+
+    def compute_teammate_succession_index(self) -> float:
+        per_player_consecutive_teammates_amount = [
+            stat.consecutive_teammates_total for stat in self.player_stats.values()
+        ]
+        return sum(per_player_consecutive_teammates_amount)
+
+    def compute_enemy_team_succession_index(self) -> float:
+        per_player_consecutive_enemies_amount = [
+            stat.consecutive_enemies_total for stat in self.player_stats.values()
+        ]
+        return sum(per_player_consecutive_enemies_amount)
+
+    def compute_player_engagement_index(self) -> float:
+        per_player_unique_people_not_played_with_or_against = [
+            stat.unique_people_not_played_with_or_against
+            for stat in self.player_stats.values()
+        ]
+        return sum(per_player_unique_people_not_played_with_or_against)
+
+    def compute_player_engagement_fairness_index(self) -> float:
+        per_player_unique_people_not_played_with_or_against = [
+            stat.unique_people_not_played_with_or_against
+            for stat in self.player_stats.values()
+        ]
+        return statistics.stdev(per_player_unique_people_not_played_with_or_against)
+
+    def calculate_global_stats(self) -> Dict[str, float]:
+        stats = {
+            MetricType.GLOBAL_NOT_PLAYING_PLAYERS_INDEX.value: self.compute_not_playing_players_index(),
+            MetricType.GLOBAL_PLAYED_MATCHES_INDEX.value: self.compute_played_matches_index(),
+            MetricType.GLOBAL_MATCHUP_LENGTH_INDEX.value: self.compute_matchup_length_index(),
+            MetricType.GLOBAL_BREAK_OCCURRENCE_INDEX.value: self.compute_break_occurrence_index(),
+            MetricType.GLOBAL_BREAK_SHORTNESS_INDEX.value: self.compute_break_shortness_index(),
+            MetricType.GLOBAL_TEAMMATE_VARIETY_INDEX.value: self.compute_teammate_variety_index(),
+            MetricType.GLOBAL_ENEMY_TEAM_VARIETY_INDEX.value: self.compute_enemy_team_variety_index(),
+            MetricType.GLOBAL_TEAMMATE_SUCCESSION_INDEX.value: self.compute_teammate_succession_index(),
+            MetricType.GLOBAL_ENEMY_TEAM_SUCCESSION_INDEX.value: self.compute_enemy_team_succession_index(),
+            MetricType.GLOBAL_PLAYER_ENGAGEMENT_INDEX.value: self.compute_player_engagement_index(),
+            MetricType.GLOBAL_PLAYER_ENGAGEMENT_FAIRNESS_INDEX.value: self.compute_player_engagement_fairness_index(),
+        }
+        return stats
+
+
 # TODO: fix break calculation for multiple fields
 # TODO: find a way to incorporate time between breaks as metric (matchup_lengths_played_between_breaks)
 # TODO: optimize for 5 and 6 players (most common normal player counts for single net)
@@ -245,77 +337,10 @@ def get_avg_matchup_diversity_score(
         unique_players, matchups, num_players
     )
 
-    # Calculate global metrics
-    global_not_playing_players_index = num_players - len(unique_players)
-
-    global_num_played_matches = [results[x].num_played_matches for x in results.keys()]
-    global_played_matches_index = statistics.stdev(global_num_played_matches)
-
-    global_break_lengths_stdev = [
-        results[x].break_lengths_stdev for x in results.keys()
-    ]
-    global_break_occurrence_index = sum(global_break_lengths_stdev)
-
-    global_per_player_break_lengths_avg = [
-        results[x].break_lengths_avg for x in results.keys()
-    ]
-    global_per_player_break_lengths_avg_squared = [
-        x**2 for x in global_per_player_break_lengths_avg
-    ]
-    global_break_shortness_index = sum(global_per_player_break_lengths_avg_squared)
-
-    per_player_matchup_length_second_element = [
-        results[x].matchup_lengths_played_between_breaks_second_length
-        for x in results.keys()
-    ]
-    global_matchup_length_index = statistics.stdev(
-        per_player_matchup_length_second_element
-    )
-
-    per_player_teammate_hist_stdev = [
-        results[x].teammate_hist_stdev for x in results.keys()
-    ]
-    global_teammate_variety_index = sum(per_player_teammate_hist_stdev)
-
-    per_player_enemy_teams_hist_stdev = [
-        results[x].enemy_teams_hist_stdev for x in results.keys()
-    ]
-    global_enemy_team_variety_index = sum(per_player_enemy_teams_hist_stdev)
-
-    per_player_consecutive_teammates_amount = [
-        results[x].consecutive_teammates_total for x in results.keys()
-    ]
-    global_teammate_succession_index = sum(per_player_consecutive_teammates_amount)
-
-    per_player_consecutive_enemies_amount = [
-        results[x].consecutive_enemies_total for x in results.keys()
-    ]
-    global_enemy_team_succession_index = sum(per_player_consecutive_enemies_amount)
-
-    per_player_unique_people_not_played_with_or_against = [
-        results[x].unique_people_not_played_with_or_against for x in results.keys()
-    ]
-    global_player_engagement_index = sum(
-        per_player_unique_people_not_played_with_or_against
-    )
-    global_player_engagement_fairness_index = statistics.stdev(
-        per_player_unique_people_not_played_with_or_against
-    )
-
     # TODO: calculate entropy, energy or something similar to quantify how good the variety of matchups played is
-    global_results = {
-        MetricType.GLOBAL_NOT_PLAYING_PLAYERS_INDEX.value: global_not_playing_players_index,
-        MetricType.GLOBAL_PLAYED_MATCHES_INDEX.value: global_played_matches_index,
-        MetricType.GLOBAL_MATCHUP_LENGTH_INDEX.value: global_matchup_length_index,
-        MetricType.GLOBAL_BREAK_OCCURRENCE_INDEX.value: global_break_occurrence_index,
-        MetricType.GLOBAL_BREAK_SHORTNESS_INDEX.value: global_break_shortness_index,
-        MetricType.GLOBAL_TEAMMATE_VARIETY_INDEX.value: global_teammate_variety_index,
-        MetricType.GLOBAL_ENEMY_TEAM_VARIETY_INDEX.value: global_enemy_team_variety_index,
-        MetricType.GLOBAL_TEAMMATE_SUCCESSION_INDEX.value: global_teammate_succession_index,
-        MetricType.GLOBAL_ENEMY_TEAM_SUCCESSION_INDEX.value: global_enemy_team_succession_index,
-        MetricType.GLOBAL_PLAYER_ENGAGEMENT_INDEX.value: global_player_engagement_index,
-        MetricType.GLOBAL_PLAYER_ENGAGEMENT_FAIRNESS_INDEX.value: global_player_engagement_fairness_index,
-    }
+    global_metric_calculator = GlobalMetricCalculator(results, num_players)
+
+    global_results = global_metric_calculator.calculate_global_stats()
 
     results["global"] = global_results
 
