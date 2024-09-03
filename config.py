@@ -3,7 +3,9 @@ from matchmaking.metric_type import MetricType
 from matchmaking.config import MetricWeightsConfig
 
 NUM_ITERATIONS = 10000
+
 NUM_ROUNDS = 13
+
 NUM_FIELDS = 3
 
 PLAYER_NAMES = [
