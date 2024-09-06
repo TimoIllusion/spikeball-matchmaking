@@ -88,11 +88,12 @@ def _get_enemy_teams(
 @dataclass
 class PlayerStatistics:
     num_played_matches: int
+    break_lengths: List[int]
     break_lengths_avg: float
     break_lengths_stdev: float
     break_lengths_hist: Counter[int]
-    matchup_lengths_played_between_breaks_second_length: float
-    matchup_lengths: List[int]
+    matchup_lengths_played_between_breaks_second_session_only: float
+    matchup_lengths_played_between_breaks: List[int]
     teammate_hist: Counter[str]
     teammate_hist_stdev: float
     enemy_teams_hist: Counter[str]
@@ -101,24 +102,33 @@ class PlayerStatistics:
     consecutive_enemies_hist: Counter[str]
     consecutive_teammates_total: int
     consecutive_enemies_total: int
-    unique_people_played_with_or_against: int
-    unique_people_not_played_with_or_against: int
+    num_unique_people_not_played_with_or_against: int
+    num_unique_people_not_played_with: int
+    num_unique_people_not_played_against: int
 
 
 class PlayerMetricCalculator:
 
-    def __init__(self, matchups: List[Matchup], num_players: int, player_uid: str):
+    def __init__(
+        self,
+        matchups: List[Matchup],
+        num_players: int,
+        num_fields: int,
+        player_uid: str,
+    ):
         self.matchups = matchups
         self.num_players = num_players
         self.player_uid = player_uid
+        self.num_fields = num_fields
 
         self.calculate_base_statistics()
 
+    # TODO: add check for consecutive enemy players (not just team composition)
+    # TODO: maybe get actual histo of all players instead of just hist of the played players, at least for specific metrics (not for consecutive teammate hist)
+
     def calculate_base_statistics(self):
 
-        self.played_matches = [
-            self.player_uid in x.get_all_player_uids() for x in self.matchups
-        ]
+        self.played_matches = self.get_played_matches()
 
         self.break_lengths = _find_consecutive_numbers(self.played_matches, 0)
 
@@ -141,16 +151,31 @@ class PlayerMetricCalculator:
             self.enemy_team_uids
         )
 
+    def get_played_matches(self) -> np.ndarray:
+        # Get a list of all player UIDs for each matchup and convert it into a boolean array
+        played_matches = np.array(
+            [self.player_uid in x.get_all_player_uids() for x in self.matchups]
+        )
+
+        # Reshape the array into rounds with num_fields columns
+        played_matches = played_matches.reshape(-1, self.num_fields)
+
+        # Check if the player played on ANY field for each round (axis=1)
+        played_matches_per_round = np.any(played_matches, axis=1)
+
+        return played_matches_per_round
+
     def compute_num_played_matches(self):
-        return sum(self.played_matches)
+        return np.sum(self.played_matches)
+
+    def compute_break_lengths(self):
+        return self.break_lengths
 
     def compute_break_lengths_avg(self):
-        return np.mean(self.break_lengths)
+        return np.mean(self.break_lengths) if len(self.break_lengths) > 0 else 0.0
 
     def compute_break_lengths_stdev(self):
-        return (
-            statistics.stdev(self.break_lengths) if len(self.break_lengths) > 1 else 0.0
-        )
+        return np.std(self.break_lengths) if len(self.break_lengths) > 0 else 0.0
 
     def compute_break_lengths_hist(self):
         return Counter(self.break_lengths)
@@ -169,21 +194,15 @@ class PlayerMetricCalculator:
         return self.teammate_hist
 
     def compute_teammate_hist_stdev(self):
-        return (
-            statistics.stdev(list(self.teammate_hist.values()))
-            if len(self.teammate_hist) > 1
-            else 0.0
-        )
+        teammate_hist_values = list(self.teammate_hist.values())
+        return np.std(teammate_hist_values)
 
     def compute_enemy_teams_hist(self):
         return self.enemy_teams_hist
 
     def compute_enemy_teams_hist_stdev(self):
-        return (
-            statistics.stdev(list(self.enemy_teams_hist.values()))
-            if len(self.enemy_teams_hist) > 1
-            else 0.0
-        )
+        enemy_teams_hist_values = list(self.enemy_teams_hist.values())
+        return np.std(enemy_teams_hist_values)
 
     def compute_consecutive_teammates_hist(self):
         return self.consecutive_teammates_hist
@@ -192,27 +211,35 @@ class PlayerMetricCalculator:
         return self.consecutive_enemies_hist
 
     def compute_consecutive_teammates_total(self):
-        return sum(list(self.consecutive_teammates_hist.values()))
+        consecutive_teammates_hist_values = list(
+            self.consecutive_teammates_hist.values()
+        )
+        return np.sum(consecutive_teammates_hist_values)
 
     def compute_consecutive_enemies_total(self):
-        return sum(list(self.consecutive_enemies_hist.values()))
-
-    def compute_unique_people_played_with_or_against(self):
-        return len(set(self.enemy_player_uids + self.teammate_uids))
+        consecutive_enemies_hist_values = list(self.consecutive_enemies_hist.values())
+        return np.sum(consecutive_enemies_hist_values)
 
     def compute_unique_people_not_played_with_or_against(self):
         return (self.num_players - 1) - len(
             set(self.enemy_player_uids + self.teammate_uids)
         )
 
+    def compute_unique_people_not_played_with(self):
+        return (self.num_players - 1) - len(set(self.teammate_uids))
+
+    def compute_unique_people_not_played_against(self):
+        return (self.num_players - 1) - len(set(self.enemy_player_uids))
+
     def calculate_player_stats(self) -> PlayerStatistics:
         return PlayerStatistics(
             num_played_matches=self.compute_num_played_matches(),
+            break_lengths=self.compute_break_lengths(),
             break_lengths_avg=self.compute_break_lengths_avg(),
             break_lengths_stdev=self.compute_break_lengths_stdev(),
             break_lengths_hist=self.compute_break_lengths_hist(),
-            matchup_lengths_played_between_breaks_second_length=self.compute_matchup_lengths_played_between_breaks_second_length(),  # optimized for short sessions
-            matchup_lengths=self.compute_matchup_lengths_played_between_breaks(),
+            matchup_lengths_played_between_breaks_second_session_only=self.compute_matchup_lengths_played_between_breaks_second_length(),  # optimized for short sessions
+            matchup_lengths_played_between_breaks=self.compute_matchup_lengths_played_between_breaks(),
             teammate_hist=self.compute_teammate_hist(),
             teammate_hist_stdev=self.compute_teammate_hist_stdev(),
             enemy_teams_hist=self.compute_enemy_teams_hist(),
@@ -221,25 +248,32 @@ class PlayerMetricCalculator:
             consecutive_enemies_hist=self.compute_consecutive_enemies_hist(),
             consecutive_teammates_total=self.compute_consecutive_teammates_total(),
             consecutive_enemies_total=self.compute_consecutive_enemies_total(),
-            unique_people_played_with_or_against=self.compute_unique_people_played_with_or_against(),
-            unique_people_not_played_with_or_against=self.compute_unique_people_not_played_with_or_against(),
+            num_unique_people_not_played_with_or_against=self.compute_unique_people_not_played_with_or_against(),
+            num_unique_people_not_played_with=self.compute_unique_people_not_played_with(),
+            num_unique_people_not_played_against=self.compute_unique_people_not_played_against(),
         )
 
 
 def _calculate_all_player_statistics(
-    unique_players: List[str], matchups: List[Matchup], num_players: int
+    unique_players: List[str],
+    matchups: List[Matchup],
+    num_players: int,
+    num_fields: int,
 ) -> dict:
 
     results = {}
     for player_uid in unique_players:
 
-        metric_calculator = PlayerMetricCalculator(matchups, num_players, player_uid)
+        metric_calculator = PlayerMetricCalculator(
+            matchups, num_players, num_fields, player_uid
+        )
 
         results[player_uid] = metric_calculator.calculate_player_stats()
 
     return results
 
 
+# TODO: combine compute of per player metrics and global metrics into one class
 class GlobalMetricCalculator:
     def __init__(self, player_stats: Dict[str, PlayerStatistics], num_players: int):
         self.player_stats = player_stats
@@ -253,89 +287,104 @@ class GlobalMetricCalculator:
         global_num_played_matches = [
             stat.num_played_matches for stat in self.player_stats.values()
         ]
-        return statistics.stdev(global_num_played_matches)
+        return np.std(global_num_played_matches)
 
-    def compute_break_occurrence_index(self) -> float:
-        global_break_lengths_stdev = [
-            stat.break_lengths_stdev for stat in self.player_stats.values()
-        ]
-        return sum(global_break_lengths_stdev)
+    # def compute_break_even_occurrence_index(self) -> float:
+    #     global_break_lengths_stdev = [
+    #         stat.break_lengths_stdev for stat in self.player_stats.values()
+    #     ]
+    #     return np.sum(global_break_lengths_stdev)
 
     def compute_break_shortness_index(self) -> float:
-        global_per_player_break_lengths_avg = [
-            stat.break_lengths_avg for stat in self.player_stats.values()
-        ]
-        global_per_player_break_lengths_avg_squared = [
-            x**2 for x in global_per_player_break_lengths_avg
-        ]
-        return sum(global_per_player_break_lengths_avg_squared)
+        """This metric computes, the summed squared break lengths above length of 1 for all players, to penalize longer breaks."""
 
-    def compute_matchup_length_index(self) -> float:
+        global_player_break_lengths = []
+        for stat in self.player_stats.values():
+            global_player_break_lengths.extend(stat.break_lengths)
+
+        # filter out breaks of length 1
+        global_player_break_lengths_filtered = np.array(
+            [x for x in global_player_break_lengths if x > 1]
+        )
+
+        return np.sum(global_player_break_lengths_filtered**2)
+
+    def compute_second_continous_matchup_length_focused_on_short_sessions_index(
+        self,
+    ) -> float:
         per_player_matchup_length_second_element = [
-            stat.matchup_lengths_played_between_breaks_second_length
+            stat.matchup_lengths_played_between_breaks_second_session_only
             for stat in self.player_stats.values()
         ]
-        return statistics.stdev(per_player_matchup_length_second_element)
+        return np.std(per_player_matchup_length_second_element)
 
-    def compute_teammate_variety_index(self) -> float:
+    def compute_teammate_variety_index(self) -> float:  # TODO: correct?
         per_player_teammate_hist_stdev = [
             stat.teammate_hist_stdev for stat in self.player_stats.values()
         ]
-        return sum(per_player_teammate_hist_stdev)
+        return np.sum(per_player_teammate_hist_stdev)
 
-    def compute_enemy_team_variety_index(self) -> float:
+    def compute_enemy_team_variety_index(self) -> float:  # TODO: correct?
         per_player_enemy_teams_hist_stdev = [
             stat.enemy_teams_hist_stdev for stat in self.player_stats.values()
         ]
-        return sum(per_player_enemy_teams_hist_stdev)
+        return np.sum(per_player_enemy_teams_hist_stdev)
 
     def compute_teammate_succession_index(self) -> float:
         per_player_consecutive_teammates_amount = [
             stat.consecutive_teammates_total for stat in self.player_stats.values()
         ]
-        return sum(per_player_consecutive_teammates_amount)
+        return np.sum(per_player_consecutive_teammates_amount)
 
     def compute_enemy_team_succession_index(self) -> float:
         per_player_consecutive_enemies_amount = [
             stat.consecutive_enemies_total for stat in self.player_stats.values()
         ]
-        return sum(per_player_consecutive_enemies_amount)
-
-    def compute_player_engagement_index(self) -> float:
-        per_player_unique_people_not_played_with_or_against = [
-            stat.unique_people_not_played_with_or_against
-            for stat in self.player_stats.values()
-        ]
-        return sum(per_player_unique_people_not_played_with_or_against)
+        return np.sum(per_player_consecutive_enemies_amount)
 
     def compute_player_engagement_fairness_index(self) -> float:
         per_player_unique_people_not_played_with_or_against = [
-            stat.unique_people_not_played_with_or_against
+            stat.num_unique_people_not_played_with_or_against
             for stat in self.player_stats.values()
         ]
-        return statistics.stdev(per_player_unique_people_not_played_with_or_against)
+        return np.std(per_player_unique_people_not_played_with_or_against)
 
-    def compute_not_played_players_index(self) -> float:
+    def compute_not_played_with_or_against_players_index(self) -> float:
         per_player_unique_people_not_played_with_or_against = [
-            stat.unique_people_not_played_with_or_against
+            stat.num_unique_people_not_played_with_or_against
             for stat in self.player_stats.values()
         ]
-        return sum(per_player_unique_people_not_played_with_or_against)
+        return np.sum(per_player_unique_people_not_played_with_or_against)
+
+    def compute_not_played_with_players_index(self) -> float:
+        per_player_unique_people_not_played_with = [
+            stat.num_unique_people_not_played_with
+            for stat in self.player_stats.values()
+        ]
+        return np.sum(per_player_unique_people_not_played_with)
+
+    def compute_not_played_against_players_index(self) -> float:
+        per_player_unique_people_not_played_against = [
+            stat.num_unique_people_not_played_against
+            for stat in self.player_stats.values()
+        ]
+        return np.sum(per_player_unique_people_not_played_against)
 
     def calculate_global_stats(self) -> Dict[str, float]:
         stats = {
             MetricType.GLOBAL_NOT_PLAYING_PLAYERS_INDEX.value: self.compute_not_playing_players_index(),
             MetricType.GLOBAL_PLAYED_MATCHES_INDEX.value: self.compute_played_matches_index(),
-            MetricType.GLOBAL_MATCHUP_LENGTH_INDEX.value: self.compute_matchup_length_index(),
-            MetricType.GLOBAL_BREAK_OCCURRENCE_INDEX.value: self.compute_break_occurrence_index(),
+            MetricType.GLOBAL_MATCHUP_SESSION_LENGTH_BETWEEN_BREAKS_INDEX.value: self.compute_second_continous_matchup_length_focused_on_short_sessions_index(),
+            # MetricType.GLOBAL_BREAK_OCCURRENCE_INDEX.value: self.compute_break_even_occurrence_index(),
             MetricType.GLOBAL_BREAK_SHORTNESS_INDEX.value: self.compute_break_shortness_index(),
             MetricType.GLOBAL_TEAMMATE_VARIETY_INDEX.value: self.compute_teammate_variety_index(),
             MetricType.GLOBAL_ENEMY_TEAM_VARIETY_INDEX.value: self.compute_enemy_team_variety_index(),
             MetricType.GLOBAL_TEAMMATE_SUCCESSION_INDEX.value: self.compute_teammate_succession_index(),
             MetricType.GLOBAL_ENEMY_TEAM_SUCCESSION_INDEX.value: self.compute_enemy_team_succession_index(),
-            MetricType.GLOBAL_PLAYER_ENGAGEMENT_INDEX.value: self.compute_player_engagement_index(),
             MetricType.GLOBAL_PLAYER_ENGAGEMENT_FAIRNESS_INDEX.value: self.compute_player_engagement_fairness_index(),
-            MetricType.GLOBAL_NOT_PLAYED_AGAINST_PLAYERS_INDEX.value: self.compute_not_played_players_index(),
+            MetricType.GLOBAL_NOT_PLAYED_WITH_OR_AGAINST_PLAYERS_INDEX.value: self.compute_not_played_with_or_against_players_index(),
+            MetricType.GLOBAL_NOT_PLAYED_WITH_PLAYERS_INDEX.value: self.compute_not_played_with_players_index(),
+            MetricType.GLOBAL_NOT_PLAYED_AGAINST_PLAYERS_INDEX.value: self.compute_not_played_against_players_index(),
         }
         return stats
 
@@ -343,10 +392,11 @@ class GlobalMetricCalculator:
 # TODO: fix break calculation for multiple fields
 # TODO: find a way to incorporate time between breaks as metric (matchup_lengths_played_between_breaks)
 # TODO: optimize for 5 and 6 players (most common normal player counts for single net)
-def get_avg_matchup_diversity_score(
+def get_total_matchup_set_score(
     matchups: List[Matchup],
     num_players: int,
     weights_and_metrics: MetricWeightsConfig,
+    num_fields: int,
 ) -> int:
 
     # Get unique player identifiers
@@ -358,7 +408,7 @@ def get_avg_matchup_diversity_score(
 
     # Calculate all player statistics
     results: Dict[str, PlayerStatistics] = _calculate_all_player_statistics(
-        unique_players, matchups, num_players
+        unique_players, matchups, num_players, num_fields
     )
 
     # TODO: calculate entropy, energy or something similar to quantify how good the variety of matchups played is

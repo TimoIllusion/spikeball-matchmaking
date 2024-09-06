@@ -107,7 +107,7 @@ def configure():
 
     st.write("#### Game Params")
     st.session_state.NUM_ROUNDS = st.slider(
-        "Number of Rounds:", min_value=1, max_value=100, value=_get_default_num_rounds()
+        "Number of Rounds:", min_value=1, max_value=_get_default_num_rounds(), value=10
     )
     st.session_state.NUM_FIELDS = st.slider(
         "Number of Fields:", min_value=1, max_value=10, value=1
@@ -125,7 +125,7 @@ def configure():
 
     value = st.slider("Weight for Global Matchup Length Index:", 0.0, 100.0, 10000.0)
     st.session_state.WEIGHT_METRIC_CONFIG.update_weight(
-        MetricType.GLOBAL_MATCHUP_LENGTH_INDEX, value
+        MetricType.GLOBAL_MATCHUP_SESSION_LENGTH_BETWEEN_BREAKS_INDEX, value
     )
 
     value = st.slider(
@@ -133,6 +133,27 @@ def configure():
     )
     st.session_state.WEIGHT_METRIC_CONFIG.update_weight(
         MetricType.GLOBAL_PLAYER_ENGAGEMENT_FAIRNESS_INDEX, value
+    )
+
+    value = st.slider(
+        "Weight for Global Not Played With Or Against Players Index:", 0.0, 100.0, 10.0
+    )
+    st.session_state.WEIGHT_METRIC_CONFIG.update_weight(
+        MetricType.GLOBAL_NOT_PLAYED_WITH_OR_AGAINST_PLAYERS_INDEX, value
+    )
+
+    value = st.slider(
+        "Weight for Global Not Played With Players Index:", 0.0, 100.0, 10.0
+    )
+    st.session_state.WEIGHT_METRIC_CONFIG.update_weight(
+        MetricType.GLOBAL_NOT_PLAYED_WITH_PLAYERS_INDEX, value
+    )
+
+    value = st.slider(
+        "Weight for Global Not Played Against Players Index:", 0.0, 100.0, 10.0
+    )
+    st.session_state.WEIGHT_METRIC_CONFIG.update_weight(
+        MetricType.GLOBAL_NOT_PLAYED_AGAINST_PLAYERS_INDEX, value
     )
 
     value = st.slider("Weight for Global Teammate Succession Index:", 0.0, 100.0, 10.0)
@@ -147,11 +168,6 @@ def configure():
         MetricType.GLOBAL_ENEMY_TEAM_SUCCESSION_INDEX, value
     )
 
-    value = st.slider("Weight for Global Player Engagement Index:", 0.0, 100.0, 5.0)
-    st.session_state.WEIGHT_METRIC_CONFIG.update_weight(
-        MetricType.GLOBAL_PLAYER_ENGAGEMENT_INDEX, value
-    )
-
     value = st.slider("Weight for Global Teammate Variety Index:", 0.0, 100.0, 5.0)
     st.session_state.WEIGHT_METRIC_CONFIG.update_weight(
         MetricType.GLOBAL_TEAMMATE_VARIETY_INDEX, value
@@ -160,11 +176,6 @@ def configure():
     value = st.slider("Weight for Global Enemy Team Variety Index:", 0.0, 100.0, 5.0)
     st.session_state.WEIGHT_METRIC_CONFIG.update_weight(
         MetricType.GLOBAL_ENEMY_TEAM_VARIETY_INDEX, value
-    )
-
-    value = st.slider("Weight for Global Break Occurrence Index:", 0.0, 100.0, 5.0)
-    st.session_state.WEIGHT_METRIC_CONFIG.update_weight(
-        MetricType.GLOBAL_BREAK_OCCURRENCE_INDEX, value
     )
 
     value = st.slider("Weight for Global Break Shortness Index:", 0.0, 100.0, 5.0)

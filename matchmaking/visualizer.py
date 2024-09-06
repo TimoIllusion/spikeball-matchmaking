@@ -96,7 +96,7 @@ class Visualizer:
             player_stats: PlayerStatistics = results[player_uid]
 
             print(
-                f"Player {player_uid} - Unique players not played with: {player_stats.unique_people_not_played_with_or_against}"
+                f"Player {player_uid} - Unique players not played with or against: {player_stats.num_unique_people_not_played_with_or_against}"
             )
 
         print()

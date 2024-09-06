@@ -6,7 +6,7 @@ from tqdm import tqdm
 import numpy as np
 
 from matchmaking.data import Player, Matchup, Team
-from matchmaking.metrics import get_avg_matchup_diversity_score
+from matchmaking.metrics import get_total_matchup_set_score
 from matchmaking.config import MetricWeightsConfig
 
 
@@ -54,6 +54,7 @@ class MatchupDiversityOptimizer:
     def get_most_diverse_matchups(
         self,
     ) -> Tuple[List[Matchup], float, dict, List[float], List[int]]:
+
         for iter in tqdm(range(self.num_iterations)):
             matchup_history = set()
             matchups: List[Matchup] = []
@@ -69,8 +70,11 @@ class MatchupDiversityOptimizer:
                 matchups, self.min_score, self.best_matchup_config, iter
             )
 
-        results, _ = get_avg_matchup_diversity_score(
-            self.best_matchup_config, len(self.players), self.weights_and_metrics
+        results, _ = get_total_matchup_set_score(
+            self.best_matchup_config,
+            len(self.players),
+            self.weights_and_metrics,
+            self.num_fields,
         )
 
         return (
@@ -122,8 +126,8 @@ class MatchupDiversityOptimizer:
         """
         Update the best score and configuration if the current score is lower than the minimum score.
         """
-        results, score = get_avg_matchup_diversity_score(
-            matchups, len(self.players), self.weights_and_metrics
+        results, score = get_total_matchup_set_score(
+            matchups, len(self.players), self.weights_and_metrics, self.num_fields
         )
 
         if score < min_score:
