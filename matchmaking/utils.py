@@ -20,39 +20,49 @@ def export_to_excel(
     df_list = []
     for i, matchup in enumerate(matchups):
 
-        team1_str = matchup.team_a.get_unique_identifier()
-        team2_str = matchup.team_b.get_unique_identifier()
-        row = [i + 1, f"Field {i%num_fields}", team1_str, "VS", team2_str]
+        team1_player_1_str = matchup.team_a.player_1.get_unique_identifier()
+        team1_player_2_str = matchup.team_a.player_2.get_unique_identifier()
+        team2_player_1_str = matchup.team_b.player_1.get_unique_identifier()
+        team2_player_2_str = matchup.team_b.player_2.get_unique_identifier()
+        row = [
+            i // num_fields,
+            f"Field {i%num_fields}",
+            team1_player_1_str,
+            team1_player_2_str,
+            "vs.",
+            team2_player_1_str,
+            team2_player_2_str,
+        ]
         row += [None]  # spacer
         row += [None]  # sets team 1 result
         row += [None]  # sets team 2 result
         row += [None]  # spacer
 
-        team1_player_uids = matchup.team_a.get_all_player_uids()
-        team2_player_uids = matchup.team_b.get_all_player_uids()
-        playing_status = []
-
-        for player in [x.get_unique_identifier() for x in players]:
-            if player in team1_player_uids:
-                playing_status.append(-1)
-            elif player in team2_player_uids:
-                playing_status.append(-2)
+        for player_id, _ in enumerate(players):
+            if i == 0 and player_id == 0:
+                row += [
+                    "'=IF(OR($C2=L$1; $D2=L$1); IF($I2>$J2; 3; IF($I2=$J2; 1; 0)); IF(OR($F2=L$1; $G2=L$1); IF($J2>$I2; 3; IF($I2=$J2; 1; 0)); 0))"
+                ]
             else:
-                playing_status.append(0)
-
-        row += playing_status
+                row += [
+                    None
+                ]  # empty cells for each player, later used for result points
 
         df_list.append(row)
+
+    df_list.append([None] * 10 + ["Summe"] + [f"=SUM(L2:L{len(matchups)+1})"])  # spacer
 
     column_names = [
         "Round",
         "Field",
         "Team 1",
+        "Team 1",
         "VS",
         "Team 2",
+        "Team 2",
         "",
-        "Sets Team 1",
-        "Sets Team 2",
+        "Points Team 1",
+        "Points Team 2",
         "",
     ] + players
     df = pd.DataFrame(df_list, columns=column_names)

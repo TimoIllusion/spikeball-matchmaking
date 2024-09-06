@@ -24,6 +24,8 @@ PLAYER_NAMES = [
     "P13",
 ]
 
+NUM_ROUNDS = len(PLAYER_NAMES)
+
 
 METRIC_WEIGHTS_CONFIG = MetricWeightsConfig()
 
