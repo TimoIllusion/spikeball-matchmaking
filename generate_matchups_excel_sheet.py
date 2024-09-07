@@ -1,3 +1,5 @@
+import datetime
+
 from matchmaking.data import Player
 from multiprocessing import Process, Manager
 from matchmaking.generator import MatchupDiversityOptimizer
@@ -26,53 +28,80 @@ def optimize_and_store_result(index, return_dict):
     }
 
 
+def check_if_even_break_distribution_is_possible():
+    ## validation checks
+    print("Num players", len(PLAYER_NAMES))
+    break_players_per_round = len(PLAYER_NAMES) % (NUM_FIELDS * 4)
+    print("Break players per round", break_players_per_round)
+    assert (break_players_per_round * NUM_ROUNDS) % len(PLAYER_NAMES) == 0, (
+        f"Number of total break players is not divisible by the number of players. "
+        f"Break players per round: {break_players_per_round}, "
+        f"Total break players: {break_players_per_round * NUM_ROUNDS}, "
+        f"Players: {len(PLAYER_NAMES)}. "
+        f"There is no option to distribute breaks evenly!"
+    )
+
+
 def main():
     manager = Manager()
     return_dict = manager.dict()
 
-    processes = []
-    for i in range(WORKERS):
-        p = Process(target=optimize_and_store_result, args=(i, return_dict))
-        p.start()
-        processes.append(p)
+    check_if_even_break_distribution_is_possible()
 
-    for p in processes:
-        p.join()
+    while True:
+        processes = []
+        for i in range(WORKERS):
+            p = Process(target=optimize_and_store_result, args=(i, return_dict))
+            p.start()
+            processes.append(p)
 
-    # Find the best result across all processes
-    best_result = min(return_dict.values(), key=lambda x: x["best_score"])
+        for p in processes:
+            p.join()
 
-    # Visualize and export the best result
-    Visualizer.print_results_to_console(
-        best_result["best_matchup_config"],
-        NUM_FIELDS,
-        NUM_ROUNDS,
-        best_result["best_score"],
-        best_result["results"],
-        [Player(p) for p in PLAYER_NAMES],
-    )
+        # Find the best result across all processes
+        best_result = min(return_dict.values(), key=lambda x: x["best_score"])
 
-    best_scores_plot_img = Visualizer.plot_best_scores(
-        best_result["best_scores"], best_result["best_scores_iterations"]
-    )
+        # Visualize and export the best result
+        Visualizer.print_results_to_console(
+            best_result["best_matchup_config"],
+            NUM_FIELDS,
+            NUM_ROUNDS,
+            best_result["best_score"],
+            best_result["results"],
+            [Player(p) for p in PLAYER_NAMES],
+        )
 
-    Visualizer.write_image(
-        best_scores_plot_img,
-        "output",
-        f"best_scores_pl{len(PLAYER_NAMES)}_flds{NUM_FIELDS}_rds{NUM_ROUNDS}_opt{best_result['best_score']:.3f}",
-    )
+        best_scores_plot_img = Visualizer.plot_best_scores(
+            best_result["best_scores"], best_result["best_scores_iterations"]
+        )
 
-    export_results_to_json(
-        best_result["results"],
-        f"output/results_pl{len(PLAYER_NAMES)}_flds{NUM_FIELDS}_rds{NUM_ROUNDS}_opt{best_result['best_score']:.3f}.json",
-    )
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        out_dir = "output"
+        out_file_name = f"{timestamp}_best_scores_pl{len(PLAYER_NAMES)}_flds{NUM_FIELDS}_rds{NUM_ROUNDS}_opt{best_result['best_score']:.3f}"
 
-    export_to_excel(
-        best_result["best_matchup_config"],
-        [Player(p) for p in PLAYER_NAMES],
-        NUM_FIELDS,
-        f"output/matchups_with_points_and_format_pl{len(PLAYER_NAMES)}_flds{NUM_FIELDS}_rds{NUM_ROUNDS}_opt{best_result['best_score']:.3f}.xlsx",
-    )
+        Visualizer.write_image(
+            best_scores_plot_img,
+            out_dir,
+            out_file_name,
+        )
+
+        export_results_to_json(
+            best_result["results"],
+            f"{out_file_name}.json",
+        )
+
+        export_to_excel(
+            best_result["best_matchup_config"],
+            [Player(p) for p in PLAYER_NAMES],
+            NUM_FIELDS,
+            f"{out_dir}/{out_file_name}.xlsx",
+        )
+
+        if best_result["global"][MetricType.GLOBAL_PLAYED_MATCHES_INDEX] == 0.0:
+            print("Requirement met: All players play the same amount of matches.")
+            break
+        else:
+            print("Requirement not met: Repeating the optimization process...")
 
 
 if __name__ == "__main__":
