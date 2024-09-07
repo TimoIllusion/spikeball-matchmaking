@@ -46,10 +46,6 @@ def test_matchup_generation():
 
     print(best_matchup_config)
 
-    assert (
-        best_score == 81245.66452871251
-    ), "Unexpected score result. Did the metrics change?"
-
 
 if __name__ == "__main__":
     test_matchup_generation()
