@@ -87,7 +87,7 @@ def main():
 
         export_results_to_json(
             best_result["results"],
-            f"{out_file_name}.json",
+            f"{out_dir}/{out_file_name}.json",
         )
 
         export_to_excel(
@@ -97,7 +97,16 @@ def main():
             f"{out_dir}/{out_file_name}.xlsx",
         )
 
-        if best_result["global"][MetricType.GLOBAL_PLAYED_MATCHES_INDEX] == 0.0:
+        if not RETRY_IF_NOT_ALL_PLAYERS_EQUAL_NUM_MATCHES:
+            break
+
+        # stop criterium: all players play the same amount of matches
+        if (
+            best_result["results"]["global"][
+                MetricType.GLOBAL_PLAYED_MATCHES_INDEX.value
+            ]
+            == 0.0
+        ):
             print("Requirement met: All players play the same amount of matches.")
             break
         else:
