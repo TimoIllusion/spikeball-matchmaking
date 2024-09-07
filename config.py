@@ -2,6 +2,8 @@ import psutil
 from matchmaking.metric_type import MetricType
 from matchmaking.config import MetricWeightsConfig
 
+# TODO: add caching of field/round/player configurations!!
+
 NUM_ITERATIONS = 100000
 
 NUM_FIELDS = 3
