@@ -9,6 +9,7 @@ from config import *
 
 
 def optimize_and_store_result(index, return_dict):
+
     players = [Player(p) for p in PLAYER_NAMES]
 
     optimizer = MatchupDiversityOptimizer(
@@ -42,10 +43,17 @@ def check_if_even_break_distribution_is_possible():
     )
 
 
+def check_if_num_players_is_sufficient_for_num_fields():
+    assert (
+        len(PLAYER_NAMES) >= NUM_FIELDS * 4
+    ), "Not enough players for the given number of fields!"
+
+
 def main():
     manager = Manager()
     return_dict = manager.dict()
 
+    check_if_num_players_is_sufficient_for_num_fields()
     check_if_even_break_distribution_is_possible()
 
     while True:
@@ -77,7 +85,7 @@ def main():
 
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         out_dir = "output"
-        out_file_name = f"{timestamp}_best_scores_pl{len(PLAYER_NAMES)}_flds{NUM_FIELDS}_rds{NUM_ROUNDS}_opt{best_result['best_score']:.3f}"
+        out_file_name = f"{timestamp}_matchups_pl{len(PLAYER_NAMES)}_flds{NUM_FIELDS}_rds{NUM_ROUNDS}_opt{best_result['best_score']:.3f}"
 
         Visualizer.write_image(
             best_scores_plot_img,
