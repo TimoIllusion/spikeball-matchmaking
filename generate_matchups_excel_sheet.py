@@ -114,6 +114,10 @@ def main():
                 MetricType.GLOBAL_PLAYED_MATCHES_INDEX.value
             ]
             == 0.0
+            and best_result["results"]["global"][
+                MetricType.GLOBAL_NOT_PLAYED_WITH_OR_AGAINST_PLAYERS_INDEX.value
+            ]
+            == 0.0
         ):
             print("Requirement met: All players play the same amount of matches.")
             break
