@@ -1,7 +1,7 @@
 from matchmaking.data import Player
 from multiprocessing import Process, Manager
 from matchmaking.generator import MatchupDiversityOptimizer
-from matchmaking.utils import export_to_excel
+from matchmaking.export import export_to_excel, export_results_to_json
 from matchmaking.visualizer import Visualizer
 from config import *
 
@@ -60,6 +60,11 @@ def main():
         best_scores_plot_img,
         "output",
         f"best_scores_pl{len(PLAYER_NAMES)}_flds{NUM_FIELDS}_rds{NUM_ROUNDS}_opt{best_result['best_score']:.3f}",
+    )
+
+    export_results_to_json(
+        best_result["results"],
+        f"output/results_pl{len(PLAYER_NAMES)}_flds{NUM_FIELDS}_rds{NUM_ROUNDS}_opt{best_result['best_score']:.3f}.json",
     )
 
     export_to_excel(

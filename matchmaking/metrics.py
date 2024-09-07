@@ -106,6 +106,26 @@ class PlayerStatistics:
     num_unique_people_not_played_with: int
     num_unique_people_not_played_against: int
 
+    def jsonify(self) -> dict:
+        # convert arrays and counters to lists
+        attributes = {}
+        for key, value in self.__dict__.items():
+            if isinstance(value, np.ndarray):
+                attributes[key] = value.tolist()
+            elif isinstance(value, Counter):
+                attributes[key] = dict(value)
+            else:
+                attributes[key] = value
+
+        # convert np float/int to native python types
+        for key, value in attributes.items():
+            if isinstance(value, np.int64):
+                attributes[key] = int(value)
+            elif isinstance(value, np.float64):
+                attributes[key] = float(value)
+
+        return attributes
+
 
 class PlayerMetricCalculator:
 
@@ -138,6 +158,7 @@ class PlayerMetricCalculator:
 
         self.teammate_uids = _get_teammate_uids(self.matchups, self.player_uid)
         self.teammate_hist = Counter(self.teammate_uids)
+        # TODO: fix this! (and also for enemies)
         self.consecutive_teammates_hist = _count_consecutive_occurences(
             self.teammate_uids
         )

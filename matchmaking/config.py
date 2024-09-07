@@ -20,13 +20,13 @@ class MetricWeightsConfig:
         self.weight_per_metric[MetricType.GLOBAL_PLAYER_ENGAGEMENT_FAIRNESS_INDEX] = (
             10.0
         )
-        self.weight_per_metric[MetricType.GLOBAL_TEAMMATE_SUCCESSION_INDEX] = 10.0
+        self.weight_per_metric[MetricType.GLOBAL_TEAMMATE_SUCCESSION_INDEX] = 100.0
         self.weight_per_metric[MetricType.GLOBAL_ENEMY_TEAM_SUCCESSION_INDEX] = 10.0
-        self.weight_per_metric[MetricType.GLOBAL_TEAMMATE_VARIETY_INDEX] = 10.0
+        self.weight_per_metric[MetricType.GLOBAL_TEAMMATE_VARIETY_INDEX] = 100.0
         self.weight_per_metric[MetricType.GLOBAL_ENEMY_TEAM_VARIETY_INDEX] = 10.0
         # self.weight_per_metric[MetricType.GLOBAL_BREAK_OCCURRENCE_INDEX] = 10.0
         self.weight_per_metric[MetricType.GLOBAL_BREAK_SHORTNESS_INDEX] = 10.0
-        self.weight_per_metric[MetricType.GLOBAL_NOT_PLAYED_WITH_PLAYERS_INDEX] = 10.0
+        self.weight_per_metric[MetricType.GLOBAL_NOT_PLAYED_WITH_PLAYERS_INDEX] = 100.0
         self.weight_per_metric[MetricType.GLOBAL_NOT_PLAYED_AGAINST_PLAYERS_INDEX] = (
             10.0
         )

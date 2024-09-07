@@ -1,10 +1,50 @@
 from typing import List
 import os
 from pathlib import Path
+import json
+from copy import deepcopy
 
 import pandas as pd
+import numpy as np
 
 from matchmaking.data import Matchup, Team, Player
+from matchmaking.metrics import PlayerStatistics
+
+
+def export_results_to_json(results: dict, out_path: str):
+    out_dir = Path(out_path).parent
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+
+    results_jsonified = {}
+
+    results_jsonified["global"] = deepcopy(results["global"])
+    results_jsonified["global"] = (
+        convert_npint64_and_npfloat64_to_int_and_float_in_dict(
+            results_jsonified["global"]
+        )
+    )
+
+    for key in results.keys():
+        if key == "global":
+            continue
+        else:
+            results_jsonified[key] = deepcopy(results[key]).jsonify()
+
+    # Write the results to a JSON file
+    with open(out_path, "w") as f:
+        json.dump(results_jsonified, f, indent=4)
+
+
+def convert_npint64_and_npfloat64_to_int_and_float_in_dict(data: dict) -> dict:
+    for key, value in data.items():
+        if isinstance(value, np.int64):
+            data[key] = int(value)
+
+        elif isinstance(value, np.float64):
+            data[key] = float(value)
+
+    return data
 
 
 def export_to_excel(

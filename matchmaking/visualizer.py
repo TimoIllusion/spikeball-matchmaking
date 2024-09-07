@@ -1,6 +1,7 @@
 from typing import List
 import os
 from pathlib import Path
+from pprint import pprint
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -53,6 +54,8 @@ class Visualizer:
         players: List[Player],
     ) -> None:
 
+        pprint(results)
+
         print("====== MATCHUPS ======")
         print()
 
@@ -97,6 +100,25 @@ class Visualizer:
 
             print(
                 f"Player {player_uid} - Unique players not played with or against: {player_stats.num_unique_people_not_played_with_or_against}"
+            )
+
+        print()
+
+        for player in players:
+            player_uid = player.get_unique_identifier()
+
+            player_stats: PlayerStatistics = results[player_uid]
+
+            print(
+                f"Player {player_uid} - Consecutive teammates: {player_stats.consecutive_teammates_total}"
+            )
+
+            print(
+                f"Player {player_uid} - Unique poeple not played with: {player_stats.num_unique_people_not_played_with}"
+            )
+
+            print(
+                f"Player {player_uid} - Unique people not played against: {player_stats.num_unique_people_not_played_against}"
             )
 
         print()
