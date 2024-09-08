@@ -7,6 +7,7 @@ class Player:
         self.name: str = name
         self.draft_probability_score: float = 1.0
         self.unique_identifier: str = ""
+        self.unique_numeric_identifier: Optional[int] = None
 
         self._initialize_unique_identifier()
 
@@ -31,6 +32,9 @@ class Player:
 
     def __repr__(self) -> str:
         return self.__str__()
+
+    def assign_numeric_identifier(self, value: int):
+        self.unique_numeric_identifier = value
 
 
 class Team:
