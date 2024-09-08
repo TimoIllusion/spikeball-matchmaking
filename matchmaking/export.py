@@ -47,6 +47,7 @@ def convert_npint64_and_npfloat64_to_int_and_float_in_dict(data: dict) -> dict:
     return data
 
 
+# TODO: add point differences to excel sheet and respective formula (not just points that someone has made on their team side!)
 def export_to_excel(
     matchups: List[Matchup], players: List[Player], num_fields: int, out_path: str
 ):
