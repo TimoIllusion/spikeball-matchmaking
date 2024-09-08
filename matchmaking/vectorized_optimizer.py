@@ -147,6 +147,91 @@ class VectorizedStatCalculator:
         # Return the result as a Python list (more flexible for jagged data)
         return break_lengths_per_player
 
+    @staticmethod
+    @jit(nopython=True)
+    # TODO: maybe use cpython for this instead of numba
+    def compute_teammates_and_enemies(
+        sessions_tensor: np.ndarray, num_players: int
+    ) -> np.ndarray:
+        """
+        Compute the teammates and enemies for each player across all rounds and sessions. For each player,
+        return a vector of length `num_rounds`, where:
+          - [..., 0] contains the teammate ID,
+          - [..., 1:3] contains the IDs of the two enemies.
+        If the player had a break, the values will be [-1, -1, -1].
+
+        Args:
+            sessions_tensor (np.ndarray): Tensor of shape (num_sessions, num_rounds, num_fields, 4)
+                                          where each entry represents player IDs.
+            num_players (int): Total number of unique players.
+
+        Returns:
+            np.ndarray: Two NumPy arrays, one of shape (num_sessions, num_players, num_rounds) and
+                        one of shape (num_sessions, num_players, num_rounds, 2).
+        """
+
+        num_sessions, num_rounds, num_fields, _ = sessions_tensor.shape
+
+        # Initialize the output array with -1 to represent breaks
+        result_array = -1 * np.ones(
+            (num_sessions, num_players, num_rounds, 3), dtype=np.int32
+        )
+
+        # Iterate over all sessions, rounds, and fields to find teammates and enemies
+        for session in range(num_sessions):
+            for round_num in range(num_rounds):
+                for field in range(num_fields):
+                    # Get the four players in this field
+                    players_in_field = sessions_tensor[session, round_num, field]
+
+                    # Team 1: Players in positions 0 and 1 are teammates, enemies are players 2 and 3
+                    player_0, player_1, player_2, player_3 = players_in_field
+
+                    # Assign teammate and enemies for player_0
+                    result_array[session, player_0, round_num, 0] = player_1  # Teammate
+                    result_array[session, player_0, round_num, 1] = (
+                        player_2  # First enemy
+                    )
+                    result_array[session, player_0, round_num, 2] = (
+                        player_3  # Second enemy
+                    )
+
+                    # Assign teammate and enemies for player_1
+                    result_array[session, player_1, round_num, 0] = player_0  # Teammate
+                    result_array[session, player_1, round_num, 1] = (
+                        player_2  # First enemy
+                    )
+                    result_array[session, player_1, round_num, 2] = (
+                        player_3  # Second enemy
+                    )
+
+                    # Assign teammate and enemies for player_2
+                    result_array[session, player_2, round_num, 0] = player_3  # Teammate
+                    result_array[session, player_2, round_num, 1] = (
+                        player_0  # First enemy
+                    )
+                    result_array[session, player_2, round_num, 2] = (
+                        player_1  # Second enemy
+                    )
+
+                    # Assign teammate and enemies for player_3
+                    result_array[session, player_3, round_num, 0] = player_2  # Teammate
+                    result_array[session, player_3, round_num, 1] = (
+                        player_0  # First enemy
+                    )
+                    result_array[session, player_3, round_num, 2] = (
+                        player_1  # Second enemy
+                    )
+
+        # split up tensor by last axis to get teammates and enemies
+        teammates = result_array[:, :, :, 0]
+        enemies = result_array[:, :, :, 1:]
+
+        return (
+            teammates,  # Shape: (num_sessions, num_players, num_rounds)
+            enemies,  # Shape: (num_sessions, num_players, num_rounds, 2)
+        )
+
 
 class VectorizedMatchupOptimizer(MatchupOptimizer):
 

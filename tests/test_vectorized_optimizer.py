@@ -67,10 +67,19 @@ def test_vectorized_matchup_optimizer():
 
     calc_memory_footprint(sessions_with_played_matches)
 
-    num_matches = stats_calculator.compute_played_matches(sessions_with_played_matches)
-    print(num_matches.shape)
+    played_matches = stats_calculator.compute_played_matches(
+        sessions_with_played_matches
+    )
+    print(played_matches.shape)
 
-    break_lengths = stats_calculator.compute_break_lengths(sessions_with_played_matches)
+    break_lengths = stats_calculator.compute_break_lengths(
+        sessions_with_played_matches
+    )  # TODO: remove
+
+    # TODO: maybe use this to directly compute breaks as well (via -1 entries)
+    teammates, enemies = stats_calculator.compute_teammates_and_enemies(
+        sessions, len(players)
+    )
 
     duration = time.time() - t
     print(f"Duration: {duration*1000.0} ms")
