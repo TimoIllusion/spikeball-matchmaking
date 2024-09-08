@@ -2,7 +2,7 @@ import datetime
 
 from matchmaking.data import Player
 from multiprocessing import Process, Manager
-from matchmaking.generator import MatchupDiversityOptimizer
+from matchmaking.simple_optimizer import SimpleMatchupOptimizer
 from matchmaking.export import export_to_excel, export_results_to_json
 from matchmaking.visualizer import Visualizer
 from config import *
@@ -12,7 +12,7 @@ def optimize_and_store_result(index, return_dict):
 
     players = [Player(p) for p in PLAYER_NAMES]
 
-    optimizer = MatchupDiversityOptimizer(
+    optimizer = SimpleMatchupOptimizer(
         players, NUM_ROUNDS, NUM_FIELDS, NUM_ITERATIONS, METRIC_WEIGHTS_CONFIG
     )
 

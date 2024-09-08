@@ -10,7 +10,7 @@ from matchmaking.metrics import get_total_matchup_set_score
 from matchmaking.config import MetricWeightsConfig
 
 
-class MatchupDiversityOptimizer:
+class SimpleMatchupOptimizer:
 
     def __init__(
         self,

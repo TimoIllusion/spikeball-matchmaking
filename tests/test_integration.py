@@ -1,5 +1,5 @@
 from matchmaking.data import Player
-from matchmaking.generator import MatchupDiversityOptimizer
+from matchmaking.simple_optimizer import SimpleMatchupOptimizer
 from matchmaking.config import MetricWeightsConfig
 
 # fix random seeds
@@ -36,7 +36,7 @@ def test_matchup_generation():
 
     metric_config = MetricWeightsConfig()
 
-    optimizer = MatchupDiversityOptimizer(
+    optimizer = SimpleMatchupOptimizer(
         players, num_rounds, num_fields, num_iterations, metric_config
     )
 
