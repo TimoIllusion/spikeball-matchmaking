@@ -1,12 +1,12 @@
 import time
+from pprint import pprint
 
 import numpy as np
 
-from matchmaking.vectorized_optimizer import (
-    VectorizedMatchupOptimizer,
-    VectorizedStatCalculator,
-)
+from matchmaking.vectorized_optimizer import VectorizedMatchupOptimizer
+from matchmaking.vectorized_stat_calculator import VectorizedStatCalculator
 from matchmaking.data import Player
+from matchmaking.vectorized_metric_calculator import VectorizedMetricCalculator
 
 
 def calc_memory_footprint(arr: np.ndarray) -> float:
@@ -35,7 +35,7 @@ def test_vectorized_matchup_optimizer():
 
     players = [Player(name) for name in player_names]
 
-    NUM_GENERATED_SESSIONS = 10000
+    NUM_GENERATED_SESSIONS = 100000
 
     optimizer = VectorizedMatchupOptimizer(
         players=players,
@@ -72,17 +72,58 @@ def test_vectorized_matchup_optimizer():
     )
     print(played_matches.shape)
 
-    break_lengths = stats_calculator.compute_break_lengths(
-        sessions_with_played_matches
-    )  # TODO: remove
+    break_lengths, match_lengths_per_player = (
+        stats_calculator.compute_break_lengths_and_match_lengths(
+            sessions_with_played_matches
+        )
+    )
 
     # TODO: maybe use this to directly compute breaks as well (via -1 entries)
     teammates, enemies = stats_calculator.compute_teammates_and_enemies(
         sessions, len(players)
     )
 
+    (
+        per_player_unique_people_not_played_with_or_against,
+        per_player_unique_people_not_played_with,
+        per_player_unique_people_not_played_against,
+    ) = stats_calculator.calculate_player_interactions(teammates, enemies)
+
+    # # show shapes
+    # print(played_matches.shape)
+    # print(
+    #     len(break_lengths[0][0])
+    # )  # shape is: num_sessions x num_players x dynamic (num of break sessions between matches)
+    # print(
+    #     len(match_lengths_per_player[0][0])
+    # )  # shape is: num_sessions x num_players x dynamic (num of match sessions between breaks)
+    # print(teammates.shape)
+    # print(enemies.shape)
+
+    metric_calculatur = VectorizedMetricCalculator(
+        sessions,
+        played_matches,
+        break_lengths,
+        match_lengths_per_player,
+        teammates,
+        enemies,
+        per_player_unique_people_not_played_with_or_against,
+        per_player_unique_people_not_played_with,
+        per_player_unique_people_not_played_against,
+    )
+
+    losses = metric_calculatur.calculate_total_loss()
+
+    best_session_idx = np.argmin(losses)
+    loss = losses[best_session_idx]
+    best_session = sessions[best_session_idx]
+    pprint(best_session)
+    print("Loss:", loss)
+
     duration = time.time() - t
-    print(f"Duration: {duration*1000.0} ms")
+    print(f"Total Duration: {duration*1000.0} ms")
+    iters_per_second = NUM_GENERATED_SESSIONS / duration
+    print(f"Iterations per second: {iters_per_second}")
 
 
 if __name__ == "__main__":
