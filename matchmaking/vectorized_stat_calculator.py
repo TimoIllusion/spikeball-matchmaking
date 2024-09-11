@@ -241,6 +241,7 @@ class VectorizedStatCalculator:
             enemies,  # Shape: (num_sessions, num_players, num_rounds, 2)
         )
 
+    # TODO: use cpython for this instead of numba
     @staticmethod
     @jit(nopython=True)
     def calculate_player_interactions(
