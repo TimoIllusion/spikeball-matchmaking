@@ -111,3 +111,88 @@ def _compute_enemy_team_succession_index_c(np.ndarray[np.int32_t, ndim=4] enemie
         enemy_team_succession_sum[session] = np.sum(consecutive_enemies[session])
 
     return enemy_team_succession_sum  # Shape: (num_sessions,)
+
+def _compute_break_shortness_index_c(object break_lengths) -> np.ndarray:
+    """
+    Computes the break shortness index by calculating the sum of the squared break lengths of all players per session.
+
+    Args:
+        break_lengths (list of lists of lists): Nested list where break_lengths[session][player] gives a list of break lengths.
+
+    Returns:
+        np.ndarray: Array containing the sum of squared break lengths per session.
+    """
+    cdef int num_sessions = len(break_lengths)
+    cdef int max_breaks = 0
+    cdef int i, j, k, num_players, num_breaks
+    cdef float total
+
+    # Step 1: Find the maximum number of breaks for any player in any session
+    for i in range(num_sessions):
+        for j in range(len(break_lengths[i])):
+            num_breaks = len(break_lengths[i][j])
+            if num_breaks > max_breaks:
+                max_breaks = num_breaks
+
+    # Step 2: Allocate an array to store the sum of squared breaks for each session
+    cdef np.ndarray[np.float32_t, ndim=1] break_lengths_squared = np.zeros(num_sessions, dtype=np.float32)
+
+    # Step 3: Compute the sum of squared break lengths, while padding where necessary
+    for i in range(num_sessions):
+        num_players = len(break_lengths[i])
+        for j in range(num_players):
+            num_breaks = len(break_lengths[i][j])
+            for k in range(num_breaks):
+                total = break_lengths[i][j][k]
+                if total > 1:  # Only square breaks greater than 1
+                    break_lengths_squared[i] += total * total
+
+    return break_lengths_squared
+
+
+def _compute_teammate_variety_index_c(np.ndarray[np.int32_t, ndim=3] teammates) -> np.ndarray:
+    """
+    Computes the teammate variety index for each session by calculating the number of unique teammates each player had,
+    and then computes the standard deviation of the variety across all players for each session.
+
+    Args:
+        teammates (np.ndarray): A NumPy array of shape (num_sessions, num_players, num_rounds)
+
+    Returns:
+        np.ndarray: A NumPy array containing the standard deviation of unique teammate counts per session.
+    """
+    cdef int num_sessions = teammates.shape[0]
+    cdef int num_players = teammates.shape[1]
+    cdef int num_rounds = teammates.shape[2]
+
+    # Allocate memory for storing the unique teammate counts for each player in each session
+    cdef np.ndarray[np.int32_t, ndim=2] unique_teammates_count = np.zeros((num_sessions, num_players), dtype=np.int32)
+
+    # Loop over all sessions, players, and rounds
+    cdef int session, player, round_num, teammate
+    cdef int count
+    cdef set unique_teammates
+
+    for session in range(num_sessions):
+        for player in range(num_players):
+            unique_teammates = set()
+            for round_num in range(num_rounds):
+                teammate = teammates[session, player, round_num]
+                if teammate != -1:
+                    unique_teammates.add(teammate)
+            unique_teammates_count[session, player] = len(unique_teammates)
+
+    # Now compute the standard deviation for each session
+    cdef np.ndarray[np.float64_t, ndim=1] teammate_variety_std = np.zeros(num_sessions, dtype=np.float64)
+
+    cdef double mean, variance, diff
+    for session in range(num_sessions):
+        mean = np.mean(unique_teammates_count[session])
+        variance = 0
+        for player in range(num_players):
+            diff = unique_teammates_count[session, player] - mean
+            variance += diff * diff
+        variance /= num_players
+        teammate_variety_std[session] = np.sqrt(variance)
+
+    return teammate_variety_std  # Shape: (num_sessions,)

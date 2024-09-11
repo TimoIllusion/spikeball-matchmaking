@@ -5,7 +5,11 @@ from numba import jit
 
 from matchmaking.timer import Timer
 from matchmaking.metric_type import MetricType
-from matchmaking.interaction_calculator import _compute_enemy_team_succession_index_c
+from matchmaking.interaction_calculator import (
+    _compute_enemy_team_succession_index_c,
+    _compute_break_shortness_index_c,
+    _compute_teammate_variety_index_c,
+)
 
 
 class VectorizedMetricCalculator:
@@ -90,31 +94,11 @@ class VectorizedMetricCalculator:
         """
         Computes the break shortness index by calculating the sum of the squared break lengths of all players per session.
         """
-        # Step 1: Find the maximum number of breaks any player had across all sessions
-        max_breaks = max(
-            len(player_breaks)
-            for session in self.break_lengths
-            for player_breaks in session
-        )
-
-        # Step 2: Pad each player's break lengths to match the max number of breaks
-        # Create a 3D NumPy array where breaks are padded with zeros to make all arrays the same length
-        padded_break_lengths = np.array(
-            [
-                [
-                    np.pad(player_breaks, (0, max_breaks - len(player_breaks)))
-                    for player_breaks in session
-                ]
-                for session in self.break_lengths
-            ]
-        )
-
-        # Step 3: Compute the sum of squared break lengths per session
-        # First, square all the padded break lengths, then sum across players and breaks
-        break_lengths_squared = np.sum(np.square(padded_break_lengths), axis=(1, 2))
 
         # Return the resulting sum of squared break lengths for each session
-        return break_lengths_squared  # Shape: (num_sessions,)
+        return _compute_break_shortness_index_c(
+            self.break_lengths
+        )  # Shape: (num_sessions,)
 
     def compute_teammate_variety_index(self) -> np.ndarray:
         """
@@ -122,33 +106,12 @@ class VectorizedMetricCalculator:
         and then computes the standard deviation of the variety across all players.
         """
         # self.teammates is assumed to be a NumPy array of shape (num_sessions, num_players, num_rounds)
-        num_sessions, num_players, num_rounds = self.teammates.shape
 
-        # Step 1: Reshape the teammates array to group rounds per player and session
-        # This reshapes it to (num_sessions * num_players, num_rounds)
-        teammates_flat = self.teammates.reshape(num_sessions * num_players, num_rounds)
+        self.teammates = self.teammates.astype(np.int32)
 
-        # Step 2: Mask out the rounds where the player did not play (represented by -1)
-        valid_teammates = teammates_flat != -1
-
-        # Step 3: Use np.apply_along_axis to compute the unique teammate count for each player in each session
-        # For each row (player across rounds), apply np.unique to count unique teammates
-        unique_teammates_count = np.array(
-            [
-                len(np.unique(teammates_flat[i, valid_teammates[i]]))
-                for i in range(teammates_flat.shape[0])
-            ]
-        )
-
-        # Step 4: Reshape the result back to (num_sessions, num_players)
-        unique_teammates_count = unique_teammates_count.reshape(
-            num_sessions, num_players
-        )
-
-        # Step 5: Compute the standard deviation of unique teammate counts for each session
-        teammate_variety_std = np.std(unique_teammates_count, axis=1)
-
-        return teammate_variety_std  # Shape: (num_sessions,)
+        return _compute_teammate_variety_index_c(
+            self.teammates
+        )  # Shape: (num_sessions,)
 
     def compute_enemy_team_variety_index(self) -> np.ndarray:
         """

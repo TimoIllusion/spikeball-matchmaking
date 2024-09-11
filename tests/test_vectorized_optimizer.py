@@ -39,13 +39,13 @@ def test_vectorized_matchup_optimizer():
 
     players = [Player(name) for name in player_names]
 
-    NUM_GENERATED_SESSIONS = 10000
+    NUM_GENERATED_SESSIONS = 100000
 
     # Optimizer initialization
     timer.start("Optimizer initialization")
     optimizer = VectorizedMatchupOptimizer(
         players=players,
-        num_rounds=10,
+        num_rounds=13,
         num_fields=3,
         num_iterations=NUM_GENERATED_SESSIONS,
         weights_and_metrics=None,
@@ -68,7 +68,7 @@ def test_vectorized_matchup_optimizer():
     # Validate shape of sessions
     assert sessions.shape == (
         NUM_GENERATED_SESSIONS,
-        10,
+        13,
         3,
         4,
     ), "Shape of sessions tensor is wrong!"
