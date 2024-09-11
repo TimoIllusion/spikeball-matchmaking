@@ -7,6 +7,7 @@ from matchmaking.vectorized_optimizer import VectorizedMatchupOptimizer
 from matchmaking.vectorized_stat_calculator import VectorizedStatCalculator
 from matchmaking.data import Player
 from matchmaking.vectorized_metric_calculator import VectorizedMetricCalculator
+from matchmaking.timer import Timer
 
 
 def calc_memory_footprint(arr: np.ndarray) -> float:
@@ -16,6 +17,9 @@ def calc_memory_footprint(arr: np.ndarray) -> float:
 
 
 def test_vectorized_matchup_optimizer():
+    timer = Timer()
+    timer_total = Timer()
+    timer_total.start("Total time")
 
     player_names = [
         "A",
@@ -37,6 +41,8 @@ def test_vectorized_matchup_optimizer():
 
     NUM_GENERATED_SESSIONS = 10000
 
+    # Optimizer initialization
+    timer.start("Optimizer initialization")
     optimizer = VectorizedMatchupOptimizer(
         players=players,
         num_rounds=10,
@@ -44,15 +50,22 @@ def test_vectorized_matchup_optimizer():
         num_iterations=NUM_GENERATED_SESSIONS,
         weights_and_metrics=None,
     )
+    timer.stop()
 
-    t = time.time()
-
+    # Generate sessions
+    timer.start("Session generation")
     sessions = optimizer.generate_n_matchup_configs(NUM_GENERATED_SESSIONS)
-    sessions = optimizer.convert_nested_matchup_config_list_to_tensor(sessions)
-    print(sessions.shape)
+    timer.stop()
 
+    # Convert sessions to tensor
+    timer.start("Session tensor conversion")
+    sessions = optimizer.convert_nested_matchup_config_list_to_tensor(sessions)
+    timer.stop()
+
+    print(sessions.shape)
     calc_memory_footprint(sessions)
 
+    # Validate shape of sessions
     assert sessions.shape == (
         NUM_GENERATED_SESSIONS,
         10,
@@ -60,36 +73,54 @@ def test_vectorized_matchup_optimizer():
         4,
     ), "Shape of sessions tensor is wrong!"
 
+    # Initialize the stats calculator
     stats_calculator = VectorizedStatCalculator()
+
+    # Prepare played matches tensor
+    timer.start("Played matches tensor preparation")
     sessions_with_played_matches = stats_calculator.prepare_played_matches_tensor(
         sessions, len(players)
     )
+    timer.stop()
 
     calc_memory_footprint(sessions_with_played_matches)
 
+    # Compute played matches
+    timer.start("Played matches computation")
     played_matches = stats_calculator.compute_played_matches(
         sessions_with_played_matches
     )
+    timer.stop()
+
     print(played_matches.shape)
 
+    # Compute break lengths and match lengths per player
+    timer.start("Break lengths and match lengths computation")
     break_lengths, match_lengths_per_player = (
         stats_calculator.compute_break_lengths_and_match_lengths(
             sessions_with_played_matches
         )
     )
+    timer.stop()
 
-    # TODO: maybe use this to directly compute breaks as well (via -1 entries)
+    # Compute teammates and enemies
+    timer.start("Teammates and enemies computation")
     teammates, enemies = stats_calculator.compute_teammates_and_enemies(
         sessions, len(players)
     )
+    timer.stop()
 
+    # Calculate player interactions
+    timer.start("Player interactions computation")
     (
         per_player_unique_people_not_played_with_or_against,
         per_player_unique_people_not_played_with,
         per_player_unique_people_not_played_against,
     ) = stats_calculator.calculate_player_interactions(teammates, enemies)
+    timer.stop()
 
-    metric_calculatur = VectorizedMetricCalculator(
+    # Metric calculator initialization
+    metric_calculator = VectorizedMetricCalculator(
         sessions,
         played_matches,
         break_lengths,
@@ -101,18 +132,21 @@ def test_vectorized_matchup_optimizer():
         per_player_unique_people_not_played_against,
     )
 
-    losses = metric_calculatur.calculate_total_loss()
+    # Calculate total loss for all sessions
+    timer.start("Loss calculation")
+    losses = metric_calculator.calculate_total_loss()
+    timer.stop()
 
     best_session_idx = np.argmin(losses)
+
     loss = losses[best_session_idx]
     best_session = sessions[best_session_idx]
+
     pprint(best_session)
+    print("Best session index:", best_session_idx)
     print("Loss:", loss)
 
-    duration = time.time() - t
-    print(f"Total Duration: {duration*1000.0} ms")
-    iters_per_second = NUM_GENERATED_SESSIONS / duration
-    print(f"Iterations per second: {iters_per_second}")
+    timer_total.stop(NUM_GENERATED_SESSIONS)
 
 
 if __name__ == "__main__":

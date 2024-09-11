@@ -1,10 +1,9 @@
 from typing import List
 
 import numpy as np
-import torch
 from numba import jit
 
-
+from matchmaking.timer import Timer
 from matchmaking.metric_type import MetricType
 
 
@@ -311,41 +310,76 @@ class VectorizedMetricCalculator:
 
     def calculate_total_loss(self) -> np.ndarray:
         """Calculate the total loss for all sessions based on the weighted sum of metrics."""
+
+        # Instantiate the Timer object
+        timer = Timer()
         losses = np.zeros((self.num_sessions, 1))
 
-        # Compute all metrics
+        # Compute all metrics with timing
+        timer.start("Not playing players index")
         losses += self.weights[
             MetricType.GLOBAL_NOT_PLAYING_PLAYERS_INDEX
         ] * self.compute_not_playing_players_index().reshape(-1, 1)
+        timer.stop()
+
+        timer.start("Played matches index")
         losses += self.weights[
             MetricType.GLOBAL_PLAYED_MATCHES_INDEX
         ] * self.compute_played_matches_index().reshape(-1, 1)
+        timer.stop()
+
+        timer.start("Not played with or against players index")
         losses += self.weights[
             MetricType.GLOBAL_NOT_PLAYED_WITH_OR_AGAINST_PLAYERS_INDEX
         ] * self.compute_not_played_with_or_against_players_index().reshape(-1, 1)
+        timer.stop()
+
+        timer.start("Not played with players index")
         losses += self.weights[
             MetricType.GLOBAL_NOT_PLAYED_WITH_PLAYERS_INDEX
         ] * self.compute_not_played_with_players_index().reshape(-1, 1)
+        timer.stop()
+
+        timer.start("Teammate variety index")
         losses += self.weights[
             MetricType.GLOBAL_TEAMMATE_VARIETY_INDEX
         ] * self.compute_teammate_variety_index().reshape(-1, 1)
+        timer.stop()
+
+        timer.start("Teammate succession index")
         losses += self.weights[
             MetricType.GLOBAL_TEAMMATE_SUCCESSION_INDEX
         ] * self.compute_teammate_succession_index().reshape(-1, 1)
+        timer.stop()
+
+        timer.start("Player engagement fairness index")
         losses += self.weights[
             MetricType.GLOBAL_PLAYER_ENGAGEMENT_FAIRNESS_INDEX
         ] * self.compute_player_engagement_fairness_index().reshape(-1, 1)
+        timer.stop()
+
+        timer.start("Enemy team succession index")
         losses += self.weights[
             MetricType.GLOBAL_ENEMY_TEAM_SUCCESSION_INDEX
         ] * self.compute_enemy_team_succession_index().reshape(-1, 1)
+        timer.stop()
+
+        timer.start("Enemy team variety index")
         losses += self.weights[
             MetricType.GLOBAL_ENEMY_TEAM_VARIETY_INDEX
         ] * self.compute_enemy_team_variety_index().reshape(-1, 1)
+        timer.stop()
+
+        timer.start("Break shortness index")
         losses += self.weights[
             MetricType.GLOBAL_BREAK_SHORTNESS_INDEX
         ] * self.compute_break_shortness_index().reshape(-1, 1)
+        timer.stop()
+
+        timer.start("Not played against players index")
         losses += self.weights[
             MetricType.GLOBAL_NOT_PLAYED_AGAINST_PLAYERS_INDEX
         ] * self.compute_not_played_against_players_index().reshape(-1, 1)
+        timer.stop()
 
         return losses  # Shape: (10000, 1)
