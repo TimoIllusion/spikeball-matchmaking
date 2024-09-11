@@ -69,3 +69,45 @@ def calculate_player_interactions_c(np.ndarray[np.int32_t, ndim=3] teammates, np
         per_player_unique_people_not_played_with,
         per_player_unique_people_not_played_against
     )
+
+def compute_enemy_team_succession_index_c(np.ndarray[np.int32_t, ndim=4] enemies) -> np.ndarray:
+    """
+    Computes the enemy team succession index efficiently in Cython by calculating how often players faced the same
+    enemy team in consecutive rounds, considering order-invariance (i.e., [1, 2] is the same as [2, 1]).
+    Returns the sum of consecutive enemy team occurrences per player and computes
+    the sum across players in each session.
+    """
+    cdef int num_sessions = enemies.shape[0]
+    cdef int num_players = enemies.shape[1]
+    cdef int num_rounds = enemies.shape[2]
+
+    # Initialize an array to store the number of consecutive enemy team occurrences for each player
+    cdef np.ndarray[np.float32_t, ndim=2] consecutive_enemies = np.zeros((num_sessions, num_players), dtype=np.float32)
+
+    # Step 1: Iterate over sessions, players, and rounds to check for consecutive enemies
+    cdef int session, player, round_num
+    cdef int current_enemy1, current_enemy2, prev_enemy1, prev_enemy2
+
+    for session in range(num_sessions):
+        for player in range(num_players):
+            # Compare consecutive rounds
+            for round_num in range(1, num_rounds):
+                # Extract enemies from current and previous rounds
+                current_enemy1 = enemies[session, player, round_num, 0]
+                current_enemy2 = enemies[session, player, round_num, 1]
+                prev_enemy1 = enemies[session, player, round_num - 1, 0]
+                prev_enemy2 = enemies[session, player, round_num - 1, 1]
+
+                # Check if both rounds are valid (player played both rounds)
+                if current_enemy1 != -1 and current_enemy2 != -1 and prev_enemy1 != -1 and prev_enemy2 != -1:
+                    # Check for order-invariant equality
+                    if (current_enemy1 == prev_enemy1 and current_enemy2 == prev_enemy2) or \
+                       (current_enemy1 == prev_enemy2 and current_enemy2 == prev_enemy1):
+                        consecutive_enemies[session, player] += 1
+
+    # Step 2: Compute the sum of consecutive enemy team counts across all players for each session
+    cdef np.ndarray[np.float32_t, ndim=1] enemy_team_succession_sum = np.zeros(num_sessions, dtype=np.float32)
+    for session in range(num_sessions):
+        enemy_team_succession_sum[session] = np.sum(consecutive_enemies[session])
+
+    return enemy_team_succession_sum  # Shape: (num_sessions,)
