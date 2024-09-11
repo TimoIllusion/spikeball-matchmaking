@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 from numba import jit
 
-from matchmaking.interaction_calculator import calculate_player_interactions_c
+from matchmaking.interaction_calculator import _calculate_player_interactions_c
 
 
 class VectorizedStatCalculator:
@@ -244,9 +244,10 @@ class VectorizedStatCalculator:
             enemies,  # Shape: (num_sessions, num_players, num_rounds, 2)
         )
 
+    # not used in favor of cython version
     @staticmethod
     @jit(nopython=True)
-    def calculate_player_interactions_numba(
+    def _calculate_player_interactions_numba(
         teammates: np.ndarray, enemies: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
@@ -348,6 +349,6 @@ class VectorizedStatCalculator:
         teammates = teammates.astype(np.int32)
         enemies = enemies.astype(np.int32)
 
-        result = calculate_player_interactions_c(teammates, enemies)
+        result = _calculate_player_interactions_c(teammates, enemies)
 
         return result

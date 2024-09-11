@@ -1,7 +1,7 @@
 import numpy as np
 cimport numpy as np
 
-def calculate_player_interactions_c(np.ndarray[np.int32_t, ndim=3] teammates, np.ndarray[np.int32_t, ndim=4] enemies):
+def _calculate_player_interactions_c(np.ndarray[np.int32_t, ndim=3] teammates, np.ndarray[np.int32_t, ndim=4] enemies):
     """
     Computes three datasets PER SESSION:
     1. per_player_unique_people_not_played_with_or_against: Unique people each player has not played with or against.
@@ -70,7 +70,7 @@ def calculate_player_interactions_c(np.ndarray[np.int32_t, ndim=3] teammates, np
         per_player_unique_people_not_played_against
     )
 
-def compute_enemy_team_succession_index_c(np.ndarray[np.int32_t, ndim=4] enemies) -> np.ndarray:
+def _compute_enemy_team_succession_index_c(np.ndarray[np.int32_t, ndim=4] enemies) -> np.ndarray:
     """
     Computes the enemy team succession index efficiently in Cython by calculating how often players faced the same
     enemy team in consecutive rounds, considering order-invariance (i.e., [1, 2] is the same as [2, 1]).

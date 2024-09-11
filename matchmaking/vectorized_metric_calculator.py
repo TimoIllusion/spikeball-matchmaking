@@ -5,7 +5,7 @@ from numba import jit
 
 from matchmaking.timer import Timer
 from matchmaking.metric_type import MetricType
-from matchmaking.interaction_calculator import compute_enemy_team_succession_index_c
+from matchmaking.interaction_calculator import _compute_enemy_team_succession_index_c
 
 
 class VectorizedMetricCalculator:
@@ -233,53 +233,58 @@ class VectorizedMetricCalculator:
     def compute_enemy_team_succession_index(self) -> np.ndarray:
         self.enemies = self.enemies.astype(np.int32)
 
-        return compute_enemy_team_succession_index_c(
+        return _compute_enemy_team_succession_index_c(
             self.enemies
         )  # Shape: (num_sessions,)
 
-    # @staticmethod
-    # @jit(nopython=True)
-    # def _compute_enemy_team_succession_index(enemies: np.ndarray) -> np.ndarray:
-    #     """
-    #     Computes the enemy team succession index efficiently using Numba by calculating how often players faced the same
-    #     enemy team in consecutive rounds, considering order-invariance (i.e., [1, 2] is the same as [2, 1]).
-    #     Returns the sum of consecutive enemy team occurrences per player and then computes
-    #     the standard deviation across players in each session.
-    #     """
-    #     num_sessions, num_players, num_rounds, _ = enemies.shape
+    # not used in favor of cython version
+    @staticmethod
+    @jit(nopython=True)
+    def _compute_enemy_team_succession_index_numba(enemies: np.ndarray) -> np.ndarray:
+        """
+        Computes the enemy team succession index efficiently using Numba by calculating how often players faced the same
+        enemy team in consecutive rounds, considering order-invariance (i.e., [1, 2] is the same as [2, 1]).
+        Returns the sum of consecutive enemy team occurrences per player and then computes
+        the standard deviation across players in each session.
+        """
+        num_sessions, num_players, num_rounds, _ = enemies.shape
 
-    #     # Initialize an array to store the number of consecutive enemy team occurrences for each player
-    #     consecutive_enemies = np.zeros((num_sessions, num_players), dtype=np.float32)
+        # Initialize an array to store the number of consecutive enemy team occurrences for each player
+        consecutive_enemies = np.zeros((num_sessions, num_players), dtype=np.float32)
 
-    #     # Step 1: Iterate over sessions, players, and rounds to check for consecutive enemies
-    #     for session in range(num_sessions):
-    #         for player in range(num_players):
-    #             # Compare consecutive rounds
-    #             for round_num in range(1, num_rounds):
-    #                 # Check if the player played both rounds
-    #                 if (
-    #                     enemies[session, player, round_num, 0] != -1
-    #                     and enemies[session, player, round_num - 1, 0] != -1
-    #                     and enemies[session, player, round_num, 1] != -1
-    #                     and enemies[session, player, round_num - 1, 1] != -1
-    #                 ):
+        # Step 1: Iterate over sessions, players, and rounds to check for consecutive enemies
+        for session in range(num_sessions):
+            for player in range(num_players):
+                # Compare consecutive rounds
+                for round_num in range(1, num_rounds):
+                    # Check if the player played both rounds
+                    current_enemy1 = enemies[session, player, round_num, 0]
+                    current_enemy2 = enemies[session, player, round_num, 1]
+                    prev_enemy1 = enemies[session, player, round_num - 1, 0]
+                    prev_enemy2 = enemies[session, player, round_num - 1, 1]
 
-    #                     # Sort both rounds' enemy pairs to account for order invariance
-    #                     current_round = np.sort(enemies[session, player, round_num])
-    #                     previous_round = np.sort(
-    #                         enemies[session, player, round_num - 1]
-    #                     )
+                    if (
+                        current_enemy1 != -1
+                        and current_enemy2 != -1
+                        and prev_enemy1 != -1
+                        and prev_enemy2 != -1
+                    ):
+                        # Check for order-invariant equality
+                        if (
+                            current_enemy1 == prev_enemy1
+                            and current_enemy2 == prev_enemy2
+                        ) or (
+                            current_enemy1 == prev_enemy2
+                            and current_enemy2 == prev_enemy1
+                        ):
+                            consecutive_enemies[session, player] += 1
 
-    #                     # If the sorted pairs are the same, increment the counter
-    #                     if np.array_equal(current_round, previous_round):
-    #                         consecutive_enemies[session, player] += 1
+        # Step 2: Compute the sum of consecutive enemy team counts across all players for each session
+        enemy_team_succession_sum = np.zeros(num_sessions, dtype=np.float32)
+        for session in range(num_sessions):
+            enemy_team_succession_sum[session] = np.sum(consecutive_enemies[session])
 
-    #     # Step 2: Compute the sum of consecutive enemy team counts across all players for each session
-    #     enemy_team_succession_sum = np.zeros(num_sessions, dtype=np.float32)
-    #     for session in range(num_sessions):
-    #         enemy_team_succession_sum[session] = np.sum(consecutive_enemies[session])
-
-    #     return enemy_team_succession_sum  # Shape: (num_sessions,)
+        return enemy_team_succession_sum  # Shape: (num_sessions,)
 
     def compute_player_engagement_fairness_index(self) -> np.ndarray:
         """
