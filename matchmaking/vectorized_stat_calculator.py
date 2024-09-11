@@ -1,9 +1,12 @@
 from typing import List, Tuple
+import time
 
 import numpy as np
 import torch
 import torch.nn.functional as F
 from numba import jit
+
+from matchmaking.interaction_calculator import calculate_player_interactions_c
 
 
 class VectorizedStatCalculator:
@@ -241,9 +244,86 @@ class VectorizedStatCalculator:
             enemies,  # Shape: (num_sessions, num_players, num_rounds, 2)
         )
 
-    # TODO: use cpython for this instead of numba
     @staticmethod
     @jit(nopython=True)
+    def calculate_player_interactions_numba(
+        teammates: np.ndarray, enemies: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Computes three datasets PER SESSION:
+        1. per_player_unique_people_not_played_with_or_against: Unique people each player has not played with or against.
+        2. per_player_unique_people_not_played_with: Unique people each player has not played with as teammates.
+        3. per_player_unique_people_not_played_against: Unique people each player has not played against.
+
+        Args:
+            teammates (np.ndarray): A NumPy array of shape (num_sessions, num_players, num_rounds), where each entry
+                                    contains the ID of the teammate in that round, or -1 if no teammate was present.
+            enemies (np.ndarray): A NumPy array of shape (num_sessions, num_players, num_rounds, 2), where each entry
+                                  contains the IDs of the enemies in that round, or -1 if no enemies were present.
+
+        Returns:
+            Tuple containing three NumPy arrays, each of shape (num_sessions, num_players):
+                - per_player_unique_people_not_played_with_or_against
+                - per_player_unique_people_not_played_with
+                - per_player_unique_people_not_played_against
+        """
+
+        num_sessions, num_players, num_rounds = teammates.shape
+
+        # Initialize result matrices for interactions PER session
+        per_player_unique_people_not_played_with_or_against = np.zeros(
+            (num_sessions, num_players), dtype=np.int32
+        )
+        per_player_unique_people_not_played_with = np.zeros(
+            (num_sessions, num_players), dtype=np.int32
+        )
+        per_player_unique_people_not_played_against = np.zeros(
+            (num_sessions, num_players), dtype=np.int32
+        )
+
+        # Step 1: Loop through each session to calculate player interactions
+        for session in range(num_sessions):
+            played_with = np.zeros((num_players, num_players), dtype=np.bool_)
+            played_against = np.zeros((num_players, num_players), dtype=np.bool_)
+
+            # Track teammates interactions for this session
+            for player in range(num_players):
+                for round_num in range(num_rounds):
+                    teammate = teammates[session, player, round_num]
+                    if teammate != -1:
+                        played_with[player, teammate] = True
+
+            # Track enemy interactions for this session
+            for player in range(num_players):
+                for round_num in range(num_rounds):
+                    enemy_1, enemy_2 = enemies[session, player, round_num]
+                    if enemy_1 != -1:
+                        played_against[player, enemy_1] = True
+                    if enemy_2 != -1:
+                        played_against[player, enemy_2] = True
+
+            # Step 2: Calculate the number of people each player has not played with or against in this session
+            played_with_or_against = played_with | played_against
+
+            total_players = num_players
+            per_player_unique_people_not_played_with[session] = total_players - np.sum(
+                played_with, axis=1
+            )
+            per_player_unique_people_not_played_against[session] = (
+                total_players - np.sum(played_against, axis=1)
+            )
+            per_player_unique_people_not_played_with_or_against[session] = (
+                total_players - np.sum(played_with_or_against, axis=1)
+            )
+
+        return (
+            per_player_unique_people_not_played_with_or_against,
+            per_player_unique_people_not_played_with,
+            per_player_unique_people_not_played_against,
+        )
+
+    # Cython implementation
+    @staticmethod
     def calculate_player_interactions(
         teammates: np.ndarray, enemies: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -265,46 +345,9 @@ class VectorizedStatCalculator:
                 - per_player_unique_people_not_played_with
                 - per_player_unique_people_not_played_against
         """
-        num_sessions, num_players, num_rounds = teammates.shape
+        teammates = teammates.astype(np.int32)
+        enemies = enemies.astype(np.int32)
 
-        # Initialize interaction matrices for both teammates and enemies
-        played_with = np.zeros((num_players, num_players), dtype=np.bool_)
-        played_against = np.zeros((num_players, num_players), dtype=np.bool_)
+        result = calculate_player_interactions_c(teammates, enemies)
 
-        # Step 1: Track teammates interactions
-        for session in range(num_sessions):
-            for player in range(num_players):
-                for round_num in range(num_rounds):
-                    teammate = teammates[session, player, round_num]
-                    if teammate != -1:
-                        played_with[player, teammate] = True
-
-        # Step 2: Track enemy interactions
-        for session in range(num_sessions):
-            for player in range(num_players):
-                for round_num in range(num_rounds):
-                    enemy_1, enemy_2 = enemies[session, player, round_num]
-                    if enemy_1 != -1:
-                        played_against[player, enemy_1] = True
-                    if enemy_2 != -1:
-                        played_against[player, enemy_2] = True
-
-        # Step 3: Calculate the number of people each player has not played with or against
-        played_with_or_against = played_with | played_against
-
-        total_players = num_players
-        per_player_unique_people_not_played_with = total_players - np.sum(
-            played_with, axis=1
-        )
-        per_player_unique_people_not_played_against = total_players - np.sum(
-            played_against, axis=1
-        )
-        per_player_unique_people_not_played_with_or_against = total_players - np.sum(
-            played_with_or_against, axis=1
-        )
-
-        return (
-            per_player_unique_people_not_played_with_or_against,
-            per_player_unique_people_not_played_with,
-            per_player_unique_people_not_played_against,
-        )
+        return result

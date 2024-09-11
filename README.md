@@ -56,3 +56,7 @@ pip install .
 ```bash
 python generate_matchups_excel_sheet.py 
 ```
+
+## Build Cython Extensions
+
+```python setup.py build_ext --inplace```

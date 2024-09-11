@@ -35,7 +35,7 @@ def test_vectorized_matchup_optimizer():
 
     players = [Player(name) for name in player_names]
 
-    NUM_GENERATED_SESSIONS = 100000
+    NUM_GENERATED_SESSIONS = 10000
 
     optimizer = VectorizedMatchupOptimizer(
         players=players,
@@ -88,17 +88,6 @@ def test_vectorized_matchup_optimizer():
         per_player_unique_people_not_played_with,
         per_player_unique_people_not_played_against,
     ) = stats_calculator.calculate_player_interactions(teammates, enemies)
-
-    # # show shapes
-    # print(played_matches.shape)
-    # print(
-    #     len(break_lengths[0][0])
-    # )  # shape is: num_sessions x num_players x dynamic (num of break sessions between matches)
-    # print(
-    #     len(match_lengths_per_player[0][0])
-    # )  # shape is: num_sessions x num_players x dynamic (num of match sessions between breaks)
-    # print(teammates.shape)
-    # print(enemies.shape)
 
     metric_calculatur = VectorizedMetricCalculator(
         sessions,

@@ -1,5 +1,6 @@
 # Custom directories
 output
+matchmaking/interaction_calculator.c
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

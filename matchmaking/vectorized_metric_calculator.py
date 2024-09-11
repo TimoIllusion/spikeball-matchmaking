@@ -281,25 +281,33 @@ class VectorizedMetricCalculator:
         """
         Computes the standard deviation of the number of people each player has not played with or against.
         """
-        return np.std(self.per_player_unique_people_not_played_with_or_against)
+        return np.std(
+            self.per_player_unique_people_not_played_with_or_against, axis=1
+        )  # Shape: (num_sessions,)
 
     def compute_not_played_with_or_against_players_index(self) -> np.ndarray:
         """
         Computes the sum of people each player has not played with or against.
         """
-        return np.sum(self.per_player_unique_people_not_played_with_or_against)
+        return np.sum(
+            self.per_player_unique_people_not_played_with_or_against, axis=1
+        )  # Shape: (num_sessions,)
 
     def compute_not_played_with_players_index(self) -> np.ndarray:
         """
         Computes the sum of people each player has not played with.
         """
-        return np.sum(self.per_player_unique_people_not_played_with)
+        return np.sum(
+            self.per_player_unique_people_not_played_with, axis=1
+        )  # Shape: (num_sessions,)
 
     def compute_not_played_against_players_index(self) -> np.ndarray:
         """
         Computes the sum of people each player has not played against.
         """
-        return np.sum(self.per_player_unique_people_not_played_against)
+        return np.sum(
+            self.per_player_unique_people_not_played_against, axis=1
+        )  # Shape: (num_sessions,)
 
     def calculate_total_loss(self) -> np.ndarray:
         """Calculate the total loss for all sessions based on the weighted sum of metrics."""
