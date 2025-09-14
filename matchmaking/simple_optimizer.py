@@ -1,6 +1,6 @@
 from pprint import pprint
 from copy import deepcopy
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from tqdm import tqdm
 import numpy as np
@@ -25,10 +25,10 @@ class SimpleMatchupOptimizer(MatchupOptimizer):
             players, num_rounds, num_fields, num_iterations, weights_and_metrics
         )
 
-        self.best_scores = []
-        self.best_scores_iterations = []
-        self.min_score = np.inf
-        self.best_matchup_config = None
+        self.best_scores: List[float] = []
+        self.best_scores_iterations: List[int] = []
+        self.min_score: float = np.inf
+        self.best_matchup_config: Optional[List[Matchup]] = None
 
     def get_most_diverse_matchups(
         self,
@@ -39,10 +39,8 @@ class SimpleMatchupOptimizer(MatchupOptimizer):
             matchups: List[Matchup] = []
 
             for _ in range(self.num_rounds):
-                temp_matchups = self.sample_matchups()
-                matchup_history.update(
-                    [x.get_unique_identifier() for x in temp_matchups]
-                )
+                temp_matchups = self.sample_matchups(matchup_history)
+                matchup_history.update(m.get_unique_identifier() for m in temp_matchups)
                 matchups.extend(temp_matchups)
 
             self.best_matchup_config, self.min_score = self.update_best_score(
@@ -64,42 +62,45 @@ class SimpleMatchupOptimizer(MatchupOptimizer):
             self.best_scores_iterations,
         )
 
-    def sample_matchups(self) -> List[Matchup]:
+    def sample_matchups(self, matchup_history: set) -> List[Matchup]:
         """
-        Sample matchups from the player pool ensuring no player is repeated in the current round.
+        Sample matchups ensuring no player is repeated in the current round,
+        and that no matchup has appeared in previous rounds.
         """
-
         player_names = [player.name for player in self.players]
 
         while True:
             selected_players = np.random.choice(
                 player_names, replace=False, size=4 * self.num_fields
             ).tolist()
+
             temp_matchups = [
                 Matchup.from_names(*selected_players[j * 4 : j * 4 + 4])
                 for j in range(self.num_fields)
             ]
 
-            if not self.has_duplicate_matchups(temp_matchups):
+            ids = [m.get_unique_identifier() for m in temp_matchups]
+
+            # Must be unique in current round and across history
+            if len(ids) == len(set(ids)) and not any(i in matchup_history for i in ids):
                 return temp_matchups
 
     def has_duplicate_matchups(self, matchups: List[Matchup]) -> bool:
         """
-        Check if any matchup has been repeated.
+        Check if any matchup list contains duplicates.
         """
-        unique_identifiers = set()
-        for matchup in matchups:
-            identifier = matchup.get_unique_identifier()
-            if identifier in unique_identifiers:
+        seen = set()
+        for m in matchups:
+            if m.get_unique_identifier() in seen:
                 return True
-            unique_identifiers.add(identifier)
+            seen.add(m.get_unique_identifier())
         return False
 
     def update_best_score(
         self,
         matchups: List[Matchup],
         min_score: float,
-        best_matchup_set: List[Matchup],
+        best_matchup_set: Optional[List[Matchup]],
         iter: int,
     ) -> Tuple[List[Matchup], float]:
         """
@@ -114,6 +115,6 @@ class SimpleMatchupOptimizer(MatchupOptimizer):
             min_score = score
             self.best_scores.append(min_score)
             self.best_scores_iterations.append(iter)
-            print("Got new minimal index: ", min_score)
+            print("Got new minimal score:", min_score)
 
         return best_matchup_set, min_score
