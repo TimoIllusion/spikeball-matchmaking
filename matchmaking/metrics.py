@@ -10,79 +10,30 @@ from matchmaking.data import Matchup, Team, Player
 from matchmaking.config import MetricWeightsConfig
 from matchmaking.metric_type import MetricType
 
-
-def _find_consecutive_numbers(arr, target_number: int):
-    lengths = []
-    length = 0
-
-    for num in arr:
-        if num == target_number:
-            length += 1
-        else:
-            if length > 0:
-                lengths.append(length)
-            length = 0
-
-    # Account for a trailing sequence of target_number
-    if length > 0:
-        lengths.append(length)
-
-    return lengths
-
-
-def _get_teammate_uids(matchups: List[Matchup], player_uid: str) -> List[str]:
-    teammate_uids = []
-
-    for matchup in matchups:
-        if player_uid in matchup.get_all_player_uids():
-            teammate = matchup.get_teammate(player_uid)
-
-            if teammate is not None:
-                teammate_uid = teammate.get_unique_identifier()
-                teammate_uids.append(teammate_uid)
-
-    assert (
-        player_uid not in teammate_uids
-    ), "Player should not be in the list of teammates"
-
-    return teammate_uids
-
-
-def _count_consecutive_occurences(list_of_symbols: List[str]) -> Counter:
-    temp_counter = 0
-    counter = Counter()
-    for i in range(len(list_of_symbols)):
-        if i == 0:
-            continue
-
-        if list_of_symbols[i] == list_of_symbols[i - 1]:
-            temp_counter += 1
-        else:
-            counter[list_of_symbols[i - 1]] += temp_counter
-            temp_counter = 0
-
-    return counter
-
-
-def _get_enemy_teams(
-    matchups: List[Matchup], player_uid: str
-) -> Tuple[List[str], List[str]]:
-
-    enemy_team_uids = []
-    enemy_player_uids = []
-    for matchup in matchups:
-        enemy_team = matchup.get_enemy_team(player_uid)
-
-        if enemy_team is not None:
-            enemy_team_uid = enemy_team.get_unique_identifier()
-            enemy_team_uids.append(enemy_team_uid)
-            enemy_player_uids.extend(enemy_team.get_all_player_uids())
-
-    assert (
-        player_uid not in enemy_player_uids
-    ), "Player should not be in the list of enemies"
-
-    return enemy_team_uids, enemy_player_uids
+from matchmaking.metric_compute_functions import (
+    compute_num_played_matches,
+    compute_break_lengths,
+    compute_break_lengths_avg,
+    compute_break_lengths_stdev,
+    compute_break_lengths_hist,
+    compute_matchup_lengths_played_between_breaks,
+    compute_matchup_lengths_played_between_breaks_second_length,
+    compute_teammate_hist,
+    compute_teammate_hist_stdev,
+    compute_enemy_teams_hist,
+    compute_enemy_teams_hist_stdev,
+    compute_consecutive_teammates_hist,
+    compute_consecutive_enemies_hist,
+    compute_consecutive_teammates_total,
+    compute_consecutive_enemies_total,
+    compute_unique_people_not_played_with_or_against,
+    compute_unique_people_not_played_with,
+    compute_unique_people_not_played_against,
+    _find_consecutive_numbers,
+    _get_teammate_uids,
+    _get_enemy_teams,
+    _count_consecutive_occurences,
+)
 
 
 @dataclass
@@ -186,92 +137,46 @@ class PlayerMetricCalculator:
 
         return played_matches_per_round
 
-    def compute_num_played_matches(self):
-        return np.sum(self.played_matches)
-
-    def compute_break_lengths(self):
-        return self.break_lengths
-
-    def compute_break_lengths_avg(self):
-        return np.mean(self.break_lengths) if len(self.break_lengths) > 0 else 0.0
-
-    def compute_break_lengths_stdev(self):
-        return np.std(self.break_lengths) if len(self.break_lengths) > 0 else 0.0
-
-    def compute_break_lengths_hist(self):
-        return Counter(self.break_lengths)
-
-    def compute_matchup_lengths_played_between_breaks(self):
-        return self.matchup_lengths_played_between_breaks
-
-    def compute_matchup_lengths_played_between_breaks_second_length(self):
-        return (
-            self.matchup_lengths_played_between_breaks[1]
-            if len(self.matchup_lengths_played_between_breaks) > 1
-            else 10.0
-        )
-
-    def compute_teammate_hist(self):
-        return self.teammate_hist
-
-    def compute_teammate_hist_stdev(self):
-        teammate_hist_values = list(self.teammate_hist.values())
-        return np.std(teammate_hist_values)
-
-    def compute_enemy_teams_hist(self):
-        return self.enemy_teams_hist
-
-    def compute_enemy_teams_hist_stdev(self):
-        enemy_teams_hist_values = list(self.enemy_teams_hist.values())
-        return np.std(enemy_teams_hist_values)
-
-    def compute_consecutive_teammates_hist(self):
-        return self.consecutive_teammates_hist
-
-    def compute_consecutive_enemies_hist(self):
-        return self.consecutive_enemies_hist
-
-    def compute_consecutive_teammates_total(self):
-        consecutive_teammates_hist_values = list(
-            self.consecutive_teammates_hist.values()
-        )
-        return np.sum(consecutive_teammates_hist_values)
-
-    def compute_consecutive_enemies_total(self):
-        consecutive_enemies_hist_values = list(self.consecutive_enemies_hist.values())
-        return np.sum(consecutive_enemies_hist_values)
-
-    def compute_unique_people_not_played_with_or_against(self):
-        return (self.num_players - 1) - len(
-            set(self.enemy_player_uids + self.teammate_uids)
-        )
-
-    def compute_unique_people_not_played_with(self):
-        return (self.num_players - 1) - len(set(self.teammate_uids))
-
-    def compute_unique_people_not_played_against(self):
-        return (self.num_players - 1) - len(set(self.enemy_player_uids))
-
     def calculate_player_stats(self) -> PlayerStatistics:
         return PlayerStatistics(
-            num_played_matches=self.compute_num_played_matches(),
-            break_lengths=self.compute_break_lengths(),
-            break_lengths_avg=self.compute_break_lengths_avg(),
-            break_lengths_stdev=self.compute_break_lengths_stdev(),
-            break_lengths_hist=self.compute_break_lengths_hist(),
-            matchup_lengths_played_between_breaks_second_session_only=self.compute_matchup_lengths_played_between_breaks_second_length(),  # optimized for short sessions
-            matchup_lengths_played_between_breaks=self.compute_matchup_lengths_played_between_breaks(),
-            teammate_hist=self.compute_teammate_hist(),
-            teammate_hist_stdev=self.compute_teammate_hist_stdev(),
-            enemy_teams_hist=self.compute_enemy_teams_hist(),
-            enemy_teams_hist_stdev=self.compute_enemy_teams_hist_stdev(),
-            consecutive_teammates_hist=self.compute_consecutive_teammates_hist(),
-            consecutive_enemies_hist=self.compute_consecutive_enemies_hist(),
-            consecutive_teammates_total=self.compute_consecutive_teammates_total(),
-            consecutive_enemies_total=self.compute_consecutive_enemies_total(),
-            num_unique_people_not_played_with_or_against=self.compute_unique_people_not_played_with_or_against(),
-            num_unique_people_not_played_with=self.compute_unique_people_not_played_with(),
-            num_unique_people_not_played_against=self.compute_unique_people_not_played_against(),
+            num_played_matches=compute_num_played_matches(self.played_matches),
+            break_lengths=compute_break_lengths(self.played_matches),
+            break_lengths_avg=compute_break_lengths_avg(self.break_lengths),
+            break_lengths_stdev=compute_break_lengths_stdev(self.break_lengths),
+            break_lengths_hist=compute_break_lengths_hist(self.break_lengths),
+            matchup_lengths_played_between_breaks_second_session_only=compute_matchup_lengths_played_between_breaks_second_length(
+                self.matchup_lengths_played_between_breaks
+            ),  # optimized for short sessions
+            matchup_lengths_played_between_breaks=compute_matchup_lengths_played_between_breaks(
+                self.matchup_lengths_played_between_breaks
+            ),
+            teammate_hist=compute_teammate_hist(self.teammate_uids),
+            teammate_hist_stdev=compute_teammate_hist_stdev(self.teammate_hist),
+            enemy_teams_hist=compute_enemy_teams_hist(self.enemy_team_uids),
+            enemy_teams_hist_stdev=compute_enemy_teams_hist_stdev(
+                self.enemy_teams_hist
+            ),
+            consecutive_teammates_hist=compute_consecutive_teammates_hist(
+                self.teammate_uids
+            ),
+            consecutive_enemies_hist=compute_consecutive_enemies_hist(
+                self.enemy_team_uids
+            ),
+            consecutive_teammates_total=compute_consecutive_teammates_total(
+                self.consecutive_teammates_hist
+            ),
+            consecutive_enemies_total=compute_consecutive_enemies_total(
+                self.consecutive_enemies_hist
+            ),
+            num_unique_people_not_played_with_or_against=compute_unique_people_not_played_with_or_against(
+                self.num_players, self.enemy_player_uids, self.teammate_uids
+            ),
+            num_unique_people_not_played_with=compute_unique_people_not_played_with(
+                self.num_players, self.teammate_uids
+            ),
+            num_unique_people_not_played_against=compute_unique_people_not_played_against(
+                self.num_players, self.enemy_player_uids
+            ),
         )
 
 
