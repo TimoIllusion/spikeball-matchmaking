@@ -1,9 +1,0 @@
-streamlit
-numpy
-tqdm
-psutil
-openpyxl
-pytest
-matplotlib
-opencv-python
-cython
