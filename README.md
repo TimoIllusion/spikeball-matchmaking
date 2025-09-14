@@ -57,10 +57,6 @@ pip install .
 python generate_matchups_excel_sheet.py 
 ```
 
-## Build Cpp Extensions
-
-```python setup.py build_ext --inplace```
-
 ## TODO
 
 - [ ] Build complete c or c++ engine for matchmaking

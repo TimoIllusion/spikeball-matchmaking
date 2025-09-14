@@ -2,7 +2,6 @@
 requires = [
     "setuptools>=61.0",
     "wheel",
-    "Cython",
     "numpy"
 ]
 build-backend = "setuptools.build_meta"
@@ -30,7 +29,6 @@ dependencies = [
     "openpyxl",
     "matplotlib",
     "opencv-python",
-    "cython",
 ]
 
 [project.optional-dependencies]
@@ -46,6 +44,3 @@ test = [
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["matchmaking*"]
-
-[tool.cython-build]
-# Cython build configuration will be handled in setup.py
