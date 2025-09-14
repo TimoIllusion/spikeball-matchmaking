@@ -79,16 +79,13 @@ def main():
             [Player(p) for p in PLAYER_NAMES],
         )
 
-        best_scores_plot_img = Visualizer.plot_best_scores(
-            best_result["best_scores"], best_result["best_scores_iterations"]
-        )
-
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         out_dir = "output"
         out_file_name = f"{timestamp}_matchups_pl{len(PLAYER_NAMES)}_flds{NUM_FIELDS}_rds{NUM_ROUNDS}_opt{best_result['best_score']:.3f}"
 
-        Visualizer.write_image(
-            best_scores_plot_img,
+        best_scores_plot_img = Visualizer.plot_best_scores(
+            best_result["best_scores"],
+            best_result["best_scores_iterations"],
             out_dir,
             out_file_name,
         )
