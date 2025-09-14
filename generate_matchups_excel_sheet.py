@@ -58,13 +58,17 @@ def main():
 
     while True:
         processes = []
-        for i in range(WORKERS):
-            p = Process(target=optimize_and_store_result, args=(i, return_dict))
-            p.start()
-            processes.append(p)
+        if WORKERS > 0:
+            for i in range(WORKERS):
+                p = Process(target=optimize_and_store_result, args=(i, return_dict))
+                p.start()
+                processes.append(p)
 
-        for p in processes:
-            p.join()
+            for p in processes:
+                p.join()
+        else:
+            # Run directly without multiprocessing
+            optimize_and_store_result(0, return_dict)
 
         # Find the best result across all processes
         best_result = min(return_dict.values(), key=lambda x: x["best_score"])
