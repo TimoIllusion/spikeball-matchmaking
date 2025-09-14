@@ -16,33 +16,40 @@ class Visualizer:
 
     @staticmethod
     def plot_best_scores(
-        best_scores: List[float], best_scores_iterations: List[float]
-    ) -> np.ndarray:
+        best_scores: List[float],
+        best_scores_iterations: List[float],
+        out_dir: str,
+        file_name: str,
+    ) -> None:
+        """
+        Plot best scores over iterations and save directly to file.
 
-        plt.plot(best_scores_iterations, best_scores)
-        plt.title("Best Scores")
+        Args:
+            best_scores: List of best score values
+            best_scores_iterations: List of iteration numbers corresponding to best scores
+            out_dir: Directory to save plot
+            file_name: File name without extension
+        """
+        out_path = Path(out_dir)
+        out_path.mkdir(parents=True, exist_ok=True)
 
-        plt.draw()
-        canvas = plt.gca().figure.canvas
-        canvas.draw()
+        plt.figure(figsize=(10, 6))
+        plt.plot(
+            best_scores_iterations,
+            best_scores,
+            "b-",
+            linewidth=2,
+            marker="o",
+            markersize=4,
+        )
+        plt.title("Best Scores Over Iterations", fontsize=14, fontweight="bold")
+        plt.xlabel("Iteration", fontsize=12)
+        plt.ylabel("Score (lower is better)", fontsize=12)
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
 
-        image = np.frombuffer(canvas.buffer_rgba(), dtype="uint8")
-        image = image.reshape(canvas.get_width_height()[::-1] + (4,))
-
+        plt.savefig(out_path / f"{file_name}.png", dpi=150)
         plt.close()
-
-        return image
-
-    @staticmethod
-    def write_image(image: np.ndarray, out_dir: str, file_name: str) -> None:
-
-        out_dir = Path(out_dir)
-
-        os.makedirs(out_dir, exist_ok=True)
-
-        out_path = out_dir / (file_name + ".png")
-
-        cv2.imwrite(out_path, image)
 
     @staticmethod
     def print_results_to_console(
