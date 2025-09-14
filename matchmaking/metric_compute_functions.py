@@ -1,6 +1,7 @@
 # Compute functions for metrics
 from typing import List, Tuple
 from collections import Counter
+from itertools import groupby
 from matchmaking.data import Matchup
 
 import numpy as np
@@ -152,19 +153,23 @@ def compute_unique_people_not_played_against(
 
 
 def _find_consecutive_numbers(arr, target_number: int):
-    lengths = []
-    length = 0
+    return [len(list(group)) for key, group in groupby(arr) if key == target_number]
 
-    for num in arr:
-        if num == target_number:
-            length += 1
-        else:
-            if length > 0:
-                lengths.append(length)
-            length = 0
 
-    # Account for a trailing sequence of target_number
-    if length > 0:
-        lengths.append(length)
+# def _find_consecutive_numbers(arr, target_number: int):
+#     lengths = []
+#     length = 0
 
-    return lengths
+#     for num in arr:
+#         if num == target_number:
+#             length += 1
+#         else:
+#             if length > 0:
+#                 lengths.append(length)
+#             length = 0
+
+#     # Account for a trailing sequence of target_number
+#     if length > 0:
+#         lengths.append(length)
+
+#     return lengths
