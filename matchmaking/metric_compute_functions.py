@@ -26,21 +26,12 @@ def _get_teammate_uids(matchups: List[Matchup], player_uid: str) -> List[str]:
 
 
 def _count_consecutive_occurences(list_of_symbols: List[str]) -> Counter:
-    temp_counter = 0
     counter = Counter()
-    for i in range(len(list_of_symbols)):
-        if i == 0:
-            continue
 
-        if list_of_symbols[i] == list_of_symbols[i - 1]:
-            temp_counter += 1
-        else:
-            counter[list_of_symbols[i - 1]] += temp_counter
-            temp_counter = 0
-
-    # Add the final consecutive count if the list ends with consecutive elements
-    if temp_counter > 0:
-        counter[list_of_symbols[-1]] += temp_counter
+    for symbol, group in groupby(list_of_symbols):
+        length = len(list(group))
+        if length > 1:  # Only count consecutive (length > 1)
+            counter[symbol] += length - 1
 
     return counter
 
