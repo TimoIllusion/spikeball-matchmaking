@@ -37,6 +37,10 @@ def _count_consecutive_occurences(list_of_symbols: List[str]) -> Counter:
             counter[list_of_symbols[i - 1]] += temp_counter
             temp_counter = 0
 
+    # Add the final consecutive count if the list ends with consecutive elements
+    if temp_counter > 0:
+        counter[list_of_symbols[-1]] += temp_counter
+
     return counter
 
 
