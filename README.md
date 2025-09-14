@@ -26,7 +26,7 @@ Follow these steps to set up the app locally:
    ```
 5. **Install the Required Packages:**
    ```bash
-   pip install -r requirements.txt
+   pip install .
    ```
 6. **Run the Streamlit App:**
    ```bash
@@ -57,7 +57,7 @@ pip install .
 python generate_matchups_excel_sheet.py 
 ```
 
-## Build Cython Extensions
+## Build Cpp Extensions
 
 ```python setup.py build_ext --inplace```
 
